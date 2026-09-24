@@ -228,3 +228,14 @@ that framing, so applying it could silently corrupt data. That guessed transform
 has been removed. The `aeskey` decrypt type remains registered/extensible, but
 it now fails closed for an actual encrypted TXT until its mode/IV/framing is
 recovered. Plain TXT files from the supplied package bypass this layer.
+
+
+#### Encrypted-TXT detection correction
+
+The temporary payload-text heuristic has been removed. A binary-looking `.txt`
+is not sufficient evidence that the file is encrypted (it may use another text
+encoding or framing), so the viewer must not automatically feed such data to an
+unverified decryptor. The supplied package currently has no proven encrypted-TXT
+marker/sample. The mandatory text-decrypt gate remains available, but it is
+invoked only when encryption is positively identified by a recovered format
+marker/call path rather than by a readability guess.
