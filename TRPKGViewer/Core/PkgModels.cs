@@ -28,7 +28,7 @@ namespace TRPKGViewer.Core
         public int Index;
         public string Name;
         public int EncodedInfoSize;
-        public byte[] DecodedInfo;
+        public byte[] DecodedInfo;\n        public uint Decoded404;\n        public uint Decoded408;\n        public uint Decoded40C;\n        public uint Decoded410;\n        public uint Decoded414;
     }
 
     // Recovered from CUMTPackageReader::open in the supplied dump.
