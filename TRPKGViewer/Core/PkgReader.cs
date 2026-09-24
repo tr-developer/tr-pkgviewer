@@ -51,11 +51,11 @@ namespace TRPKGViewer.Core
                 info.Entries.Add(new PkgIndexEntry
                 {
                     Index = i, Name = name, EncodedInfoSize = encodedSize, DecodedInfo = decoded,
-                    Decoded404 = BitConverter.ToUInt32(decoded, 0x404),
+                    LogicalSize = BitConverter.ToUInt32(decoded, 0x404),
                     Decoded408 = BitConverter.ToUInt32(decoded, 0x408),
                     Decoded40C = BitConverter.ToUInt32(decoded, 0x40C),
                     Decoded410 = BitConverter.ToUInt32(decoded, 0x410),
-                    Decoded414 = BitConverter.ToUInt32(decoded, 0x414)
+                    DataOffset = BitConverter.ToUInt32(decoded, 0x414)
                 });
             }
         }
