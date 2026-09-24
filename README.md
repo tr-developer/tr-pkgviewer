@@ -125,3 +125,19 @@ both 16-byte halves with the fixed binary preprocessing key, then uses the
 resulting 32 bytes as the package key and separately derives the 16-byte tail
 mask. Package implementation should reproduce that composition and the client's
 block direction/order, rather than porting the large T-tables literally.
+
+
+### Package crypt validation correction
+
+The first .NET/OpenSSL composition was tested directly against the supplied
+`tr4.pkg`. For `script\\abnormalitymode\\abnormalitymodedata.xml`, the first
+chunk is flag `0x2`, stored/unpacked length 473 bytes at package offset
+`0x20`. Using the proposed fixed-key AES-128 preprocess, AES-256 package key,
+AES decrypt for complete blocks, and derived tail mask produced non-XML binary
+output. Therefore that composition is **not validated and is disabled in
+`PkgEntryReader`**. Flag-`0x2` chunks continue to raise the structured
+`PackageCryptRequiredException` instead of emitting corrupt files.
+
+This falsifies at least one assumed direction/input in the constructor chain.
+The next implementation must be accepted only when this 473-byte XML entry
+(and additional TXT/XML samples) decodes to structurally valid plaintext.
