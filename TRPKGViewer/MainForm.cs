@@ -16,7 +16,6 @@ namespace TRPKGViewer
         readonly TextBox view = new TextBox();
         readonly ToolStripStatusLabel status = new ToolStripStatusLabel();
         readonly ToolStripMenuItem textDecryptionMenu = new ToolStripMenuItem("Text Decryption");
-        readonly ToolStripMenuItem selectedTextKeyItem = new ToolStripMenuItem();
         TextDecryptionKey selectedTextKey;
 
         public MainForm()
@@ -40,9 +39,6 @@ namespace TRPKGViewer
             file.DropDownItems.Add(extractAll);
             menu.Items.Add(file);
 
-            selectedTextKeyItem.Enabled = false;
-            textDecryptionMenu.DropDownItems.Add(selectedTextKeyItem);
-            textDecryptionMenu.DropDownItems.Add(new ToolStripSeparator());
             foreach (var key in TextDecryptionKeys.All)
             {
                 var keyItem = new ToolStripMenuItem(key.Name);
@@ -90,12 +86,16 @@ namespace TRPKGViewer
         void SetTextDecryptionKey(TextDecryptionKey key)
         {
             selectedTextKey = key;
-            selectedTextKeyItem.Text = "Selected: " + (key == null ? "(None)" : key.Name);
             foreach (ToolStripItem child in textDecryptionMenu.DropDownItems)
             {
                 var menuItem = child as ToolStripMenuItem;
-                if (menuItem != null && menuItem.Tag is TextDecryptionKey)
-                    menuItem.Checked = ReferenceEquals(menuItem.Tag, key);
+                var menuKey = menuItem == null ? null : menuItem.Tag as TextDecryptionKey;
+                if (menuKey != null)
+                {
+                    bool isSelected = ReferenceEquals(menuKey, key);
+                    menuItem.Checked = isSelected;
+                    menuItem.Text = menuKey.Name + (isSelected ? " [Selected]" : "");
+                }
             }
         }
 
