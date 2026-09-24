@@ -57,12 +57,19 @@ namespace TRPKGViewer.Core
             if (BitConverter.ToUInt32(indexHeader, 0) != 0)
                 throw new InvalidDataException("Invalid package index header.");
 
-            for (int i = 0; i < info.Probe.EntryCount; i++)
+            int expectedCount = checked((int)info.Probe.EntryCount);
+            for (int i = 0; i < expectedCount; i++)
             {
                 if (fs.Position + 4 > fs.Length)
+                {
+                    // Some package variants carry a larger header-side count.  The on-disk
+                    // index itself is authoritative: reaching EOF exactly after a complete
+                    // entry terminates the index cleanly.
+                    if (fs.Position == fs.Length && i > 0) break;
                     throw new InvalidDataException("Index ended before entry " + i +
-                        " of " + info.Probe.EntryCount + " (position 0x" +
+                        " of header count " + info.Probe.EntryCount + " (position 0x" +
                         fs.Position.ToString("X") + ", file size 0x" + fs.Length.ToString("X") + ").");
+                }
 
                 byte[] sizeBytes = new byte[4];
                 ReadExact(fs, sizeBytes, 0, 4);
