@@ -7,6 +7,12 @@ namespace TRPKGViewer.Core
 {
     public static class DdsDecoder
     {
+        public static bool IsDds(byte[] data)
+        {
+            return data != null && data.Length >= 128 &&
+                   data[0] == 0x44 && data[1] == 0x44 && data[2] == 0x53 && data[3] == 0x20;
+        }
+
         public static Bitmap Decode(byte[] data)
         {
             if (data == null || data.Length < 128 || data[0] != 'D' || data[1] != 'D' || data[2] != 'S' || data[3] != ' ')
