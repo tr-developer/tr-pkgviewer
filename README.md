@@ -218,3 +218,13 @@ to trigger text decryption. TXT encryption detection now happens only after
 package decompression/decryption, based on whether the resulting payload is
 already valid text. The separate `ITextDecryptor` layer remains in place for
 actual encrypted TXT payloads.
+
+
+#### TXT AES safety correction
+
+The previous `AesTextDecryptor` used CBC + zero IV + PKCS7 only as a placeholder.
+There is no matching encrypted-TXT sample or verified client call site proving
+that framing, so applying it could silently corrupt data. That guessed transform
+has been removed. The `aeskey` decrypt type remains registered/extensible, but
+it now fails closed for an actual encrypted TXT until its mode/IV/framing is
+recovered. Plain TXT files from the supplied package bypass this layer.
