@@ -46,7 +46,7 @@ The reader repeatedly:
 5. lower-cases the path/name contained in the decoded buffer,
 6. materializes an internal entry record with a stride of exactly `0xE5` bytes.
 
-The recovered materialized record begins with a `0x80`-byte name/path area. Additional copied fields are present at offsets `0x80`, `0x84`, `0x88`, `0x8C`, `0x90`, `0x94`, `0x98`, `0x9C..0xB3`, `0xB4`, `0xB8..0xCF`, `0xD0`, `0xD4`, and `0xD5..0xE4`. These are now represented by `PkgEntryInfo`; unknown fields remain neutrally named until their semantics are proven.
+The recovered materialized record begins with a `0x80`-byte name/path area. The source-to-materialized mapping is now exact: decoded `+0x400 -> materialized +0x80`, `+0x404 -> +0x84`, `+0x408 -> +0x88`, `+0x40C -> +0x8C`, `+0x410 -> +0x90`, `+0x414 -> +0x94`, `+0x418 -> +0x98`, `+0x41C..0x433 -> +0x9C..0xB3`, `+0x434 -> +0xB4`, `+0x438..0x44F -> +0xB8..0xCF`, `+0x450 -> +0xD0`, `+0x50B -> +0xD4`, and `+0x50C..0x51B -> +0xD5..0xE4`. These are now represented by `PkgEntryInfo`; unknown fields remain neutrally named until their semantics are proven.
 
 This also explains the dump string `Invalid CUMTPackageFileEntryInfo size!`: the decoded entry-info object is expected to be `0x51C` bytes.
 
