@@ -47,7 +47,9 @@ namespace TRPKGViewer
                 textDecryptionMenu.DropDownItems.Add(keyItem);
             }
             menu.Items.Add(textDecryptionMenu);
-            SetTextDecryptionKey(null);
+            SetTextDecryptionKey(TextDecryptionKeys.All.Count == 0
+                ? null
+                : TextDecryptionKeys.All[TextDecryptionKeys.All.Count - 1]);
 
 
             MainMenuStrip = menu;
