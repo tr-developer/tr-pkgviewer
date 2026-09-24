@@ -17,7 +17,7 @@ The supplied `tr4.pkg` is 96,701,627 bytes. The dump now confirms several header
 
 The first 12 bytes are a package signature. For version 2 the client XORs those 12 bytes with a fixed package-crypt byte sequence and then compares the result to ASCII `ACAC35E5-4B7`. From the supplied sample, the corresponding 12-byte XOR sequence is `05 5B CB 64 FB C2 CE B4 77 8B 1B B8`. This is package-format crypt and is kept separate from encrypted TXT decryption.
 
-At the index offset, the reader consumes a 12-byte index header, requires its first DWORD to be zero, and bounds the following count/value to at most 1000 before allocating the `0xE5` entry array. For that reason, the initial parser does not invent entry offsets or structures. It provides header, DWORD, hex and printable-string diagnostics while the exact `CUMTPackageReader` layout is recovered.
+At the index offset, the sample contains a 12-byte index header followed immediately by `[uint32 encodedSize][zlib entry-info]` records. Header fields `+0x24` and `+0x28` both contain `473`; decoding exactly 473 records succeeds and produces real paths such as `script\\abnormalitymode\\abnormalitymodedata.xml`, `script\\abusedata.txt`, and `script\\advertisement.txt`. `PkgReader` now enumerates these entries and the WinForms tree displays all recovered names. For that reason, the initial parser does not invent entry offsets or structures. It provides header, DWORD, hex and printable-string diagnostics while the exact `CUMTPackageReader` layout is recovered.
 
 ## Text decrypt architecture
 
