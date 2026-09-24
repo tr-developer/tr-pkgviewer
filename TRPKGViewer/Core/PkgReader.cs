@@ -59,11 +59,21 @@ namespace TRPKGViewer.Core
 
             for (int i = 0; i < info.Probe.EntryCount; i++)
             {
+                if (fs.Position + 4 > fs.Length)
+                    throw new InvalidDataException("Index ended before entry " + i +
+                        " of " + info.Probe.EntryCount + " (position 0x" +
+                        fs.Position.ToString("X") + ", file size 0x" + fs.Length.ToString("X") + ").");
+
                 byte[] sizeBytes = new byte[4];
                 ReadExact(fs, sizeBytes, 0, 4);
                 int encodedSize = checked((int)BitConverter.ToUInt32(sizeBytes, 0));
                 if (encodedSize <= 0 || encodedSize > PkgEntryInfoDecoder.MaxEncodedSize)
                     throw new InvalidDataException("Invalid encoded entry-info size at index " + i + ".");
+
+                if (fs.Position + encodedSize > fs.Length)
+                    throw new InvalidDataException("Encoded entry-info at index " + i +
+                        " exceeds end of file (size " + encodedSize + ", position 0x" +
+                        fs.Position.ToString("X") + ", file size 0x" + fs.Length.ToString("X") + ").");
 
                 byte[] encoded = new byte[encodedSize];
                 ReadExact(fs, encoded, 0, encoded.Length);
