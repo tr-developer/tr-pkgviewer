@@ -4,7 +4,7 @@ using System.Text;
 
 namespace TRPKGViewer.Crypto
 {
-    // "aeskey" decrypt type. Replace/extend this class when the real game's
+    // The client key is confirmed; mode/IV/framing still require call-site verification.
     // AES mode, IV derivation or key material is recovered.
     public sealed class AesTextDecryptor : ITextDecryptor
     {
