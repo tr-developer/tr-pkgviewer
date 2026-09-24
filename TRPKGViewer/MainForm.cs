@@ -105,14 +105,14 @@ namespace TRPKGViewer
             if (n.Tag is PkgIndexEntry)
             {
                 var e = (PkgIndexEntry)n.Tag;
-                view.Text = "#" + e.Index + "\\r\\n" + e.Name +
-                    "\\r\\nEncoded info: " + e.EncodedInfoSize + " bytes\r
+                view.Text = "#" + e.Index + "\r\n" + e.Name +
+                    "\r\nEncoded info: " + e.EncodedInfoSize + " bytes\r
 Decoded info: " + e.DecodedInfo.Length + " bytes" +
-                    "\\r\\n\\r\\nDecoded +0x404: " + e.LogicalSize +
-                    "\\r\\nDecoded +0x408: " + e.Decoded408 +
-                    "\\r\\nDecoded +0x40C: 0x" + e.Decoded40C.ToString("X8") +
-                    "\\r\\nDecoded +0x410: " + e.Decoded410 +
-                    "\\r\\nDecoded +0x414: 0x" + e.DataOffset.ToString("X8");
+                    "\r\n\r\nDecoded +0x404: " + e.LogicalSize +
+                    "\r\nDecoded +0x408: " + e.Decoded408 +
+                    "\r\nDecoded +0x40C: 0x" + e.Decoded40C.ToString("X8") +
+                    "\r\nDecoded +0x410: " + e.Decoded410 +
+                    "\r\nDecoded +0x414: 0x" + e.DataOffset.ToString("X8");
                 return;
             }
             string t = n.Tag as string;
@@ -120,16 +120,16 @@ Decoded info: " + e.DecodedInfo.Length + " bytes" +
             else if (t == "words")
             {
                 var sb = new StringBuilder(); sb.AppendLine("Offset    UInt32(hex)  UInt32(dec)");
-                foreach (var w in pkg.Words) sb.AppendFormat("0x{0:X4}    0x{1:X8}   {2}\\r\\n", w.Offset, w.Value, w.Value);
+                foreach (var w in pkg.Words) sb.AppendFormat("0x{0:X4}    0x{1:X8}   {2}\r\n", w.Offset, w.Value, w.Value);
                 view.Text = sb.ToString();
             }
             else if (t == "strings")
             {
                 var sb = new StringBuilder();
-                foreach (var x in pkg.Strings) sb.AppendFormat("0x{0:X8}  {1}\\r\\n", x.Offset, x.Text);
+                foreach (var x in pkg.Strings) sb.AppendFormat("0x{0:X8}  {1}\r\n", x.Offset, x.Text);
                 view.Text = sb.ToString();
             }
-            else view.Text = "File: " + pkg.Path + "\\r\\nSize: " + pkg.Length.ToString("N0") + " bytes";
+            else view.Text = "File: " + pkg.Path + "\r\nSize: " + pkg.Length.ToString("N0") + " bytes";
         }
 
         void PreviewEntry(TreeNode node)
@@ -141,7 +141,12 @@ Decoded info: " + e.DecodedInfo.Length + " bytes" +
                 byte[] payload = entryReader.Read(pkg.Path, entry);
                 string ext = Path.GetExtension(entry.Name);
                 if (string.Equals(ext, ".txt", StringComparison.OrdinalIgnoreCase) ||
-                    string.Equals(ext, ".xml", StringComparison.OrdinalIgnoreCase))
+                    string.Equals(ext, ".xml", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(ext, ".py", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(ext, ".lua", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(ext, ".ini", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(ext, ".cfg", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(ext, ".csv", StringComparison.OrdinalIgnoreCase))
                 {
                     view.Text = DecodeText(payload);
                     status.Text = "Preview " + entry.Name + " (" + payload.Length.ToString("N0") + " bytes)";
@@ -151,7 +156,7 @@ Decoded info: " + e.DecodedInfo.Length + " bytes" +
             }
             catch (PackageCryptRequiredException ex)
             {
-                view.Text = ex.Message + "\\r\\n\\r\\nPackage crypt is required before this entry can be previewed.";
+                view.Text = ex.Message + "\r\n\r\nPackage crypt is required before this entry can be previewed.";
             }
             catch (Exception ex) { MessageBox.Show(ex.Message, "Preview failed"); }
         }
@@ -182,8 +187,6 @@ Decoded info: " + e.DecodedInfo.Length + " bytes" +
                 try
                 {
                     byte[] payload = entryReader.Read(pkg.Path, entry);
-                    // Package-level chunk crypt is handled by PkgEntryReader. Encrypted TXT
-                    // must additionally pass through the selected text decrypt type.
                     File.WriteAllBytes(d.FileName, payload);
                     status.Text = "Extracted " + entry.Name + " (" + payload.Length.ToString("N0") + " bytes)";
                 }
