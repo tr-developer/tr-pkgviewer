@@ -32,7 +32,15 @@ namespace TRPKGViewer.Core
                 if (info.Probe.HeaderSize != 0x1C) throw new InvalidDataException("Invalid package header size.");
                 if (info.Probe.DecodedEntryInfoSize != PkgEntryInfoDecoder.DecodedSize) throw new InvalidDataException("Invalid entry-info size.");
                 if (info.Probe.IndexOffset >= fs.Length) throw new InvalidDataException("Invalid package index offset.");
-                if (info.Probe.EntryCount != info.Probe.EntryCountMirror || info.Probe.EntryCount > 1000) throw new InvalidDataException("Invalid package entry count.");
+                if (info.Probe.EntryCount != info.Probe.EntryCountMirror)
+                    throw new InvalidDataException("Package entry-count fields do not match (" +
+                        info.Probe.EntryCount + " / " + info.Probe.EntryCountMirror + ").");
+                if (info.Probe.EntryCount == 0)
+                    throw new InvalidDataException("Package contains no index entries.");
+                long minimumIndexBytes = 12L + (long)info.Probe.EntryCount * 5L;
+                if ((long)info.Probe.IndexOffset + minimumIndexBytes > fs.Length)
+                    throw new InvalidDataException("Package entry count exceeds the available index region: " +
+                        info.Probe.EntryCount + ".");
                 ReadIndex(fs, info);
 
                 fs.Position = 0;
