@@ -184,3 +184,22 @@ For the active seed the derived package key is
 This was validated against the first 473-byte flag-2 entry: output begins
 `EF BB BF 3C 3F 78 6D 6C` (UTF-8 BOM + `<?xml`) and contains the expected
 XML declaration. Package crypt is therefore enabled in `PkgEntryReader`.
+
+
+#### Full sample extraction validation
+
+The reconstructed package layer was run across all 473 entries in `tr4.pkg`.
+All 473 entries completed chunk parsing, optional zlib inflate, package decrypt,
+chunk-size checks, and final logical-size checks successfully. The sample contains
+21 XML and 263 TXT entries.
+
+The previous UI heuristic `TXT && decoded +0x410 != 0` was disproven: ordinary
+plaintext TXT files occur with +0x410 values including 1, 2, 3, 4, 5, 6, 7, 8,
+9, 11, 19, 21, 26, 52, 53, 87, and 567. It must not be used as the text-AES
+indicator. The heuristic was removed so the viewer no longer corrupts normal TXT
+files by passing them through the placeholder text decryptor.
+
+Post-package TXT payloads in this sample include UTF-16LE BOM text, ASCII, and
+Korean CP949 text. Preview decoding now uses BOM handling, strict UTF-8, then
+CP949 fallback. Text-AES detection/mode/IV/framing remains a separate unresolved
+layer and will only be enabled when its actual client-side marker is recovered.
