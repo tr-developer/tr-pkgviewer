@@ -43,7 +43,6 @@ namespace TRPKGViewer
 
             var split = new SplitContainer();
             split.Dock = DockStyle.Fill;
-            split.SplitterDistance = 160;
             split.Panel1MinSize = 120;
             split.SplitterWidth = 5;
             split.Panel1.Controls.Add(tree); split.Panel2.Controls.Add(view);
@@ -57,6 +56,13 @@ namespace TRPKGViewer
             var ss = new StatusStrip(); ss.Items.Add(status);
             Controls.Add(ss); Controls.Add(split);
             ss.Dock = DockStyle.Bottom; menu.Dock = DockStyle.Top; split.BringToFront();
+
+            Shown += (s, e) =>
+            {
+                int target = Math.Max(split.Panel1MinSize, Math.Min(180, split.ClientSize.Width / 5));
+                if (split.ClientSize.Width > target + split.SplitterWidth)
+                    split.SplitterDistance = target;
+            };
         }
 
         void OpenPkg()
