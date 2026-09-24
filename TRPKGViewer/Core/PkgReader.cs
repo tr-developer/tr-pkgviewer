@@ -19,6 +19,22 @@ namespace TRPKGViewer.Core
                 for (int o = 0; o + 4 <= Math.Min(n, 256); o += 4)
                     info.Words.Add(new PkgWord { Offset = o, Value = BitConverter.ToUInt32(info.Header, o) });
 
+                if (n < 0x2C) throw new InvalidDataException("Truncated package header.");
+                info.Probe = new PkgHeaderProbe
+                {
+                    Version = BitConverter.ToUInt32(info.Header, 0x0C),
+                    IndexOffset = BitConverter.ToUInt32(info.Header, 0x14),
+                    HeaderSize = BitConverter.ToUInt32(info.Header, 0x18),
+                    DecodedEntryInfoSize = BitConverter.ToUInt32(info.Header, 0x1C),
+                    EntryCount = BitConverter.ToUInt32(info.Header, 0x24),
+                    EntryCountMirror = BitConverter.ToUInt32(info.Header, 0x28)
+                };
+                if (info.Probe.HeaderSize != 0x1C) throw new InvalidDataException("Invalid package header size.");
+                if (info.Probe.DecodedEntryInfoSize != PkgEntryInfoDecoder.DecodedSize) throw new InvalidDataException("Invalid entry-info size.");
+                if (info.Probe.IndexOffset >= fs.Length) throw new InvalidDataException("Invalid package index offset.");
+                if (info.Probe.EntryCount != info.Probe.EntryCountMirror || info.Probe.EntryCount > 1000) throw new InvalidDataException("Invalid package entry count.");
+                ReadIndex(fs, info);
+
                 fs.Position = 0;
                 info.Strings = ScanAscii(fs, 6, 5000);
             }
