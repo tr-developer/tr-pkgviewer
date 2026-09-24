@@ -25,6 +25,33 @@ namespace TRPKGViewer.Core
             return info;
         }
 
+        static void ReadIndex(FileStream fs, PkgInfo info)
+        {
+            fs.Position = info.Probe.IndexOffset;
+            byte[] indexHeader = new byte[12];
+            ReadExact(fs, indexHeader, 0, indexHeader.Length);
+            if (BitConverter.ToUInt32(indexHeader, 0) != 0)
+                throw new InvalidDataException("Invalid package index header.");
+
+            for (int i = 0; i < info.Probe.EntryCount; i++)
+            {
+                byte[] sizeBytes = new byte[4];
+                ReadExact(fs, sizeBytes, 0, 4);
+                int encodedSize = checked((int)BitConverter.ToUInt32(sizeBytes, 0));
+                if (encodedSize <= 0 || encodedSize > PkgEntryInfoDecoder.MaxEncodedSize)
+                    throw new InvalidDataException("Invalid encoded entry-info size at index " + i + ".");
+
+                byte[] encoded = new byte[encodedSize];
+                ReadExact(fs, encoded, 0, encoded.Length);
+                byte[] decoded = PkgEntryInfoDecoder.DecodeZlib(encoded);
+
+                int nameLength = 0;
+                while (nameLength < 0x80 && decoded[nameLength] != 0) nameLength++;
+                string name = Encoding.ASCII.GetString(decoded, 0, nameLength).ToLowerInvariant();
+                info.Entries.Add(new PkgIndexEntry { Index = i, Name = name, EncodedInfoSize = encodedSize, DecodedInfo = decoded });
+            }
+        }
+
         public byte[] ReadRange(string path, long offset, int count)
         {
             using (var fs = File.OpenRead(path))
