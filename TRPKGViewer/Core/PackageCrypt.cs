@@ -10,15 +10,19 @@ namespace TRPKGViewer.Core
     public sealed class PackageCrypt
     {
         static readonly byte[] FixedKey = { 0x0D,0x68,0x07,0x6F,0x0A,0x09,0x07,0x6C,0x65,0x73,0x0D,0x75,0x6E,0x0A,0x65,0x0D };
-        static readonly byte[] Seed = Encoding.ASCII.GetBytes("CECA72E7ACDB485C8DF0AC16A2EA6D92");
         readonly byte[] key;
         readonly byte[] tailMask;
 
-        public PackageCrypt()
+        public PackageCrypt(string seed)
         {
+            if (seed == null) throw new ArgumentNullException("seed");
+            byte[] seedBytes = Encoding.ASCII.GetBytes(seed);
+            if (seedBytes.Length != 32)
+                throw new ArgumentException("Package crypt seed must be exactly 32 ASCII bytes.", "seed");
+
             key = new byte[32];
-            Transform(FixedKey, Seed, 0, key, 0, false);
-            Transform(FixedKey, Seed, 16, key, 16, false);
+            Transform(FixedKey, seedBytes, 0, key, 0, false);
+            Transform(FixedKey, seedBytes, 16, key, 16, false);
             tailMask = new byte[16];
             Transform(key, key, 0, tailMask, 0, false);
         }
