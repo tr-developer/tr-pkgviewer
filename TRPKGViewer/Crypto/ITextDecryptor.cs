@@ -1,9 +1,9 @@
 namespace TRPKGViewer.Crypto
 {
+    // A decrypt TYPE. Do not put PKG/version selection logic here.
     public interface ITextDecryptor
     {
-        string Version { get; }
         string Name { get; }
-        byte[] Decrypt(byte[] data);
+        byte[] Decrypt(byte[] encryptedData);
     }
 }
