@@ -25,7 +25,8 @@ namespace TRPKGViewer.Core
                     uint index = BitConverter.ToUInt32(h, 0);
                     int unpacked = checked((int)BitConverter.ToUInt32(h, 4));
                     int stored = checked((int)BitConverter.ToUInt32(h, 8));
-                    uint value0C = BitConverter.ToUInt32(h, 12);\n                    uint flags = BitConverter.ToUInt32(h, 16);
+                    uint value0C = BitConverter.ToUInt32(h, 12);
+                    uint flags = BitConverter.ToUInt32(h, 16);
                     if (index != (uint)chunkIndex) throw new InvalidDataException("Invalid chunk index.");
                     if (unpacked < 0 || unpacked > MaxChunkSize || stored < 0 || pos + ChunkHeaderSize + stored > fs.Length)
                         throw new InvalidDataException("Invalid chunk size.");
@@ -62,5 +63,13 @@ namespace TRPKGViewer.Core
         {
             while (n > 0) { int r = s.Read(b, o, n); if (r <= 0) throw new EndOfStreamException(); o += r; n -= r; }
         }
+    }
+
+    public sealed class PackageCryptRequiredException : NotSupportedException
+    {
+        public PackageCryptRequiredException(string name, int index, long offset, int unpacked, int stored, uint value0C, uint flags)
+            : base("Package-crypt chunk: " + name + " #" + index + " offset=0x" + offset.ToString("X") +
+                   " unpacked=" + unpacked + " stored=" + stored + " value0C=0x" + value0C.ToString("X8") +
+                   " flags=0x" + flags.ToString("X8")) { }
     }
 }
