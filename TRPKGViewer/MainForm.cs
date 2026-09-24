@@ -39,6 +39,9 @@ namespace TRPKGViewer
             var extract = new ToolStripMenuItem("Extract selected...");
             extract.Click += (s, e) => ExtractSelected();
             file.DropDownItems.Add(extract);
+            var extractAll = new ToolStripMenuItem("Extract all...");
+            extractAll.Click += (s, e) => ExtractAll();
+            file.DropDownItems.Add(extractAll);
             menu.Items.Add(file);
 
             var tools = new ToolStripMenuItem("Tools");
@@ -175,6 +178,44 @@ Decoded info: " + e.DecodedInfo.Length + " bytes" +
                     status.Text = "Extracted " + entry.Name + " (" + payload.Length.ToString("N0") + " bytes)";
                 }
                 catch (Exception ex) { MessageBox.Show(ex.Message, "Extract failed"); }
+            }
+        }
+
+        void ExtractAll()
+        {
+            if (pkg == null) return;
+            using (var d = new FolderBrowserDialog { Description = "Select extraction folder" })
+            {
+                if (d.ShowDialog() != DialogResult.OK) return;
+                try
+                {
+                    string root = Path.GetFullPath(d.SelectedPath);
+                    int done = 0;
+                    foreach (var entry in pkg.Entries)
+                    {
+                        byte[] payload = entryReader.Read(pkg.Path, entry);
+                        // No encrypted-TXT marker is proven for this package, so do not
+                        // guess. When a marker is recovered this must use the same gate.
+                        payload = ProcessEntryPayload(entry.Name, false, payload);
+
+                        string relative = entry.Name.Replace('/', Path.DirectorySeparatorChar)
+                                                    .Replace('\\', Path.DirectorySeparatorChar);
+                        string target = Path.GetFullPath(Path.Combine(root, relative));
+                        string rootPrefix = root.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+                                          + Path.DirectorySeparatorChar;
+                        if (!target.StartsWith(rootPrefix, StringComparison.OrdinalIgnoreCase))
+                            throw new InvalidDataException("Unsafe package path: " + entry.Name);
+
+                        string dir = Path.GetDirectoryName(target);
+                        if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
+                        File.WriteAllBytes(target, payload);
+                        done++;
+                        status.Text = "Extracting " + done + "/" + pkg.Entries.Count + ": " + entry.Name;
+                        Application.DoEvents();
+                    }
+                    status.Text = "Extracted all " + done + " files to " + root;
+                }
+                catch (Exception ex) { MessageBox.Show(ex.Message, "Extract all failed"); }
             }
         }
 
