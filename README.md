@@ -157,3 +157,11 @@ from the package-crypt singleton and must be traced through its complete
 initialization/state path. The first known XML vector has chunk header:
 index=0, unpacked=473, stored=473, DWORD3=`0x500AF46B`, flags=`0x2`.
 DWORD3 remains deliberately unnamed until its reader-side use is proven.
+
+
+#### Experimental implementation cleanup
+
+The failed `PackageCrypt.cs` composition has been removed from the project rather
+than retained as dead/tempting production code. The extraction path continues to
+stop on flag-`0x2` with structured diagnostics. A package crypt implementation
+will be reintroduced only after the known 473-byte XML vector passes exactly.
