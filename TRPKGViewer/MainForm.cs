@@ -14,6 +14,7 @@ namespace TRPKGViewer
         PkgInfo pkg;
         readonly TreeView tree = new TreeView();
         readonly TextBox view = new TextBox();
+        readonly PictureBox imageView = new PictureBox();
         readonly ToolStripStatusLabel status = new ToolStripStatusLabel();
         readonly ToolStripMenuItem textDecryptionMenu = new ToolStripMenuItem("Text Decryption");
         TextDecryptionKey selectedTextKey;
@@ -59,8 +60,9 @@ namespace TRPKGViewer
             split.Dock = DockStyle.Fill;
             split.Panel1MinSize = 120;
             split.SplitterWidth = 5;
-            split.Panel1.Controls.Add(tree); split.Panel2.Controls.Add(view);
+            split.Panel1.Controls.Add(tree); split.Panel2.Controls.Add(view); split.Panel2.Controls.Add(imageView);
             tree.Dock = DockStyle.Fill; view.Dock = DockStyle.Fill;
+            imageView.Dock = DockStyle.Fill; imageView.SizeMode = PictureBoxSizeMode.Zoom; imageView.Visible = false;
             tree.Font = new Font(FontFamily.GenericSansSerif, 8.0f);
             view.Multiline = true; view.ScrollBars = ScrollBars.Both;
             view.Font = new Font(FontFamily.GenericMonospace, 9); view.WordWrap = false;
@@ -155,6 +157,7 @@ namespace TRPKGViewer
 
         void ShowNode(TreeNode n)
         {
+            ShowTextView();
             if (pkg == null) return;
             if (n.Tag is PkgIndexEntry)
             {
@@ -198,6 +201,12 @@ namespace TRPKGViewer
             {
                 byte[] payload = entryReader.Read(pkg.Path, entry, GetSelectedCryptSeed());
                 string ext = Path.GetExtension(entry.Name);
+                string imageKind;
+                if (TryPreviewImage(payload, out imageKind))
+                {
+                    status.Text = "Preview " + entry.Name + " [" + imageKind + "] (" + payload.Length.ToString("N0") + " bytes)";
+                    return;
+                }
                 if (string.Equals(ext, ".txt", StringComparison.OrdinalIgnoreCase) ||
                     string.Equals(ext, ".xml", StringComparison.OrdinalIgnoreCase) ||
                     string.Equals(ext, ".py", StringComparison.OrdinalIgnoreCase) ||
@@ -214,6 +223,39 @@ namespace TRPKGViewer
             }
             catch (Exception ex) { MessageBox.Show(ex.Message, "Preview failed"); }
         }
+
+        void ShowTextView()
+        {
+            if (imageView.Image != null) { var old = imageView.Image; imageView.Image = null; old.Dispose(); }
+            imageView.Visible = false; view.Visible = true; view.BringToFront();
+        }
+
+        bool TryPreviewImage(byte[] data, out string kind)
+        {
+            kind = null;
+            try
+            {
+                Image image = null;
+                if (DdsDecoder.IsDds(data)) { image = DdsDecoder.Decode(data); kind = "DDS"; }
+                else if (IsStandardImage(data))
+                {
+                    using (var ms = new MemoryStream(data, false))
+                    using (var loaded = Image.FromStream(ms)) image = new Bitmap(loaded);
+                    kind = IsPng(data) ? "PNG" : IsJpeg(data) ? "JPEG" : IsBmp(data) ? "BMP" : "GIF";
+                }
+                if (image == null) return false;
+                if (imageView.Image != null) imageView.Image.Dispose();
+                imageView.Image = image; view.Visible = false; imageView.Visible = true; imageView.BringToFront();
+                return true;
+            }
+            catch { return false; }
+        }
+
+        static bool IsStandardImage(byte[] b) { return IsPng(b) || IsJpeg(b) || IsBmp(b) || IsGif(b); }
+        static bool IsPng(byte[] b) { return b.Length >= 8 && b[0] == 0x89 && b[1] == 0x50 && b[2] == 0x4E && b[3] == 0x47 && b[4] == 0x0D && b[5] == 0x0A && b[6] == 0x1A && b[7] == 0x0A; }
+        static bool IsJpeg(byte[] b) { return b.Length >= 3 && b[0] == 0xFF && b[1] == 0xD8 && b[2] == 0xFF; }
+        static bool IsBmp(byte[] b) { return b.Length >= 2 && b[0] == 0x42 && b[1] == 0x4D; }
+        static bool IsGif(byte[] b) { return b.Length >= 6 && b[0] == 0x47 && b[1] == 0x49 && b[2] == 0x46 && b[3] == 0x38 && (b[4] == 0x37 || b[4] == 0x39) && b[5] == 0x61; }
 
         static byte[] Slice(byte[] data, int count)
         {
