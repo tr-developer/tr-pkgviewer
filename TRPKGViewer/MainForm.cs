@@ -151,7 +151,7 @@ namespace TRPKGViewer
             key.SetBounds(100, 52, 380, 24);
             var ok = new Button { Text = "OK", DialogResult = DialogResult.OK, Left = 320, Top = 90, Width = 75 };
             var cancel = new Button { Text = "Cancel", DialogResult = DialogResult.Cancel, Left = 405, Top = 90, Width = 75 };
-            Controls.AddRange(new Control[] { l1, version, l2, key, ok, cancel });
+            Controls.AddRange(new Control[] { l1, type, l2, key, ok, cancel });
             AcceptButton = ok; CancelButton = cancel;
         }
     }
