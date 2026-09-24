@@ -101,6 +101,13 @@ namespace TRPKGViewer
             }
         }
 
+        string GetSelectedCryptSeed()
+        {
+            if (selectedTextKey == null)
+                throw new InvalidOperationException("No Text Decryption key is selected.");
+            return selectedTextKey.Key;
+        }
+
         void OpenPkg()
         {
             using (var d = new OpenFileDialog { Filter = "TR package (*.pkg)|*.pkg|All files (*.*)|*.*" })
@@ -189,7 +196,7 @@ namespace TRPKGViewer
             var entry = (PkgIndexEntry)node.Tag;
             try
             {
-                byte[] payload = entryReader.Read(pkg.Path, entry);
+                byte[] payload = entryReader.Read(pkg.Path, entry, GetSelectedCryptSeed());
                 string ext = Path.GetExtension(entry.Name);
                 if (string.Equals(ext, ".txt", StringComparison.OrdinalIgnoreCase) ||
                     string.Equals(ext, ".xml", StringComparison.OrdinalIgnoreCase) ||
@@ -240,7 +247,7 @@ namespace TRPKGViewer
                 if (d.ShowDialog() != DialogResult.OK) return;
                 try
                 {
-                    byte[] payload = entryReader.Read(pkg.Path, entry);
+                    byte[] payload = entryReader.Read(pkg.Path, entry, GetSelectedCryptSeed());
                     File.WriteAllBytes(d.FileName, payload);
                     status.Text = "Extracted " + entry.Name + " (" + payload.Length.ToString("N0") + " bytes)";
                 }
@@ -260,7 +267,7 @@ namespace TRPKGViewer
                     int done = 0;
                     foreach (var entry in pkg.Entries)
                     {
-                        byte[] payload = entryReader.Read(pkg.Path, entry);
+                        byte[] payload = entryReader.Read(pkg.Path, entry, GetSelectedCryptSeed());
 
                         string relative = entry.Name.Replace('/', Path.DirectorySeparatorChar)
                                                     .Replace('\\', Path.DirectorySeparatorChar);
