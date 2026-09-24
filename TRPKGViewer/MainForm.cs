@@ -123,7 +123,7 @@ Decoded info: " + e.DecodedInfo.Length + " bytes" +
             try
             {
                 byte[] payload = entryReader.Read(pkg.Path, entry);
-                payload = ProcessEntryPayload(entry.Name, IsEncryptedTextPayload(entry.Name, payload), payload);
+                payload = ProcessEntryPayload(entry.Name, false, payload);
                 string ext = Path.GetExtension(entry.Name);
                 if (string.Equals(ext, ".txt", StringComparison.OrdinalIgnoreCase) ||
                     string.Equals(ext, ".xml", StringComparison.OrdinalIgnoreCase))
@@ -169,52 +169,13 @@ Decoded info: " + e.DecodedInfo.Length + " bytes" +
                     byte[] payload = entryReader.Read(pkg.Path, entry);
                     // Package-level chunk crypt is handled by PkgEntryReader. Encrypted TXT
                     // must additionally pass through the selected text decrypt type.
-                    bool encryptedText = IsEncryptedTextPayload(entry.Name, payload);
+                    bool encryptedText = false; // No encrypted-TXT marker is proven for the supplied package.
                     payload = ProcessEntryPayload(entry.Name, encryptedText, payload);
                     File.WriteAllBytes(d.FileName, payload);
                     status.Text = "Extracted " + entry.Name + " (" + payload.Length.ToString("N0") + " bytes)";
                 }
                 catch (Exception ex) { MessageBox.Show(ex.Message, "Extract failed"); }
             }
-        }
-
-        static bool IsEncryptedTextPayload(string entryName, byte[] payload)
-        {
-            if (!string.Equals(Path.GetExtension(entryName), ".txt", StringComparison.OrdinalIgnoreCase))
-                return false;
-
-            // +0x410 is not an encrypted-TXT marker: it is 1 for the known plain TXT
-            // population in tr4.pkg. Decide only after package-level decoding.
-            if (payload.Length >= 2 && payload[0] == 0xFF && payload[1] == 0xFE)
-                return false;
-            if (payload.Length >= 3 && payload[0] == 0xEF && payload[1] == 0xBB && payload[2] == 0xBF)
-                return false;
-
-            return !LooksLikeText(payload);
-        }
-
-        static bool LooksLikeText(byte[] payload)
-        {
-            Encoding[] encodings =
-            {
-                new UTF8Encoding(false, true),
-                Encoding.GetEncoding(949, EncoderFallback.ExceptionFallback, DecoderFallback.ExceptionFallback)
-            };
-
-            foreach (Encoding encoding in encodings)
-            {
-                try
-                {
-                    string text = encoding.GetString(payload);
-                    if (text.Length == 0) return true;
-                    int good = 0;
-                    foreach (char ch in text)
-                        if (!char.IsControl(ch) || ch == '\r' || ch == '\n' || ch == '\t') good++;
-                    if (good * 100 >= text.Length * 95) return true;
-                }
-                catch (DecoderFallbackException) { }
-            }
-            return false;
         }
 
         void ExportHeader()
