@@ -77,3 +77,16 @@ partial block is XORed with that derived tail mask.
 This confirms that the visible 32-byte package constant is input key material,
 but it must not be hard-coded as the final raw key until the object's `+0x08`
 preprocess state and its `+0x0C` context initialization are recovered.
+
+
+#### Package key preprocessing: constructor state resolved
+
+A fresh disassembly pass resolves the earlier uncertainty around the constructor's `+0x08` byte. It is not an externally-selected boolean flag. The constructor first calls `0x7ff64809d840` on the cipher object beginning at object `+0x08`, using the fixed 16-byte binary value:
+
+`0D 68 07 6F 0A 09 07 6C 65 73 0D 75 6E 0A 65 0D`
+
+That initializer builds a 16-byte-key cipher context and sets its leading initialized byte to 1. The constructor immediately tests that same byte, so the two 16-byte halves of `A73FF15DBE914FCC880037FB32E4D314` are always passed through `0x7ff6480ae880` before the 32-byte package context is initialized.
+
+Therefore the package-key preprocessing stage is mandatory for this client. A control test using ordinary OpenSSL AES-128-ECB for the first transform and AES-256-ECB for the package transform did **not** produce valid XML/TXT plaintext from real flag-`0x2` chunks. The client primitive must therefore be reproduced from its own key schedule/block routines rather than substituted with standard .NET/OpenSSL AES semantics.
+
+The sample package contains 1,437 flag-`0x2` chunks, giving a large validation corpus once the primitive is ported.
