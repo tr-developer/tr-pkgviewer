@@ -14,10 +14,11 @@ namespace TRPKGViewer.Core
 
     public sealed class PkgHeaderProbe
     {
-        public uint Value0C;
-        public uint Value14;
-        public uint Value18;
-        public uint Value1C;
+        // Confirmed by CUMTPackageReader::open.
+        public uint Version;              // file +0x0C
+        public uint IndexOffset;          // file +0x14, absolute seek target
+        public uint HeaderSize;           // file +0x18, must be 0x1C
+        public uint DecodedEntryInfoSize; // file +0x1C, must be 0x51C
         public uint Value24;
         public uint Value28;
     }
