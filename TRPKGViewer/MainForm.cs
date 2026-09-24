@@ -105,42 +105,35 @@ namespace TRPKGViewer
             if (n.Tag is PkgIndexEntry)
             {
                 var e = (PkgIndexEntry)n.Tag;
-                view.Text = "#" + e.Index + "\r
-" + e.Name +
-                    "\r
-Encoded info: " + e.EncodedInfoSize + " bytes\r
-Decoded info: " + e.DecodedInfo.Length + " bytes" +
-                    "\r
-\r
-Decoded +0x404: " + e.LogicalSize +
-                    "\r
-Decoded +0x408: " + e.Decoded408 +
-                    "\r
-Decoded +0x40C: 0x" + e.Decoded40C.ToString("X8") +
-                    "\r
-Decoded +0x410: " + e.Decoded410 +
-                    "\r
-Decoded +0x414: 0x" + e.DataOffset.ToString("X8");
+                view.Text = "#" + e.Index + "\\r\\n" + e.Name +
+                    "\\r\\nEncoded info: " + e.EncodedInfoSize + " bytes" +
+                    "\\r\\nDecoded info: " + e.DecodedInfo.Length + " bytes" +
+                    "\\r\\n\\r\\nDecoded +0x404: " + e.LogicalSize +
+                    "\\r\\nDecoded +0x408: " + e.Decoded408 +
+                    "\\r\\nDecoded +0x40C: 0x" + e.Decoded40C.ToString("X8") +
+                    "\\r\\nDecoded +0x410: " + e.Decoded410 +
+                    "\\r\\nDecoded +0x414: 0x" + e.DataOffset.ToString("X8");
                 return;
             }
             string t = n.Tag as string;
             if (t == "header") view.Text = PkgReader.Hex(pkg.Header);
             else if (t == "words")
             {
-                var sb = new StringBuilder(); sb.AppendLine("Offset    UInt32(hex)  UInt32(dec)");
-                foreach (var w in pkg.Words) sb.AppendFormat("0x{0:X4}    0x{1:X8}   {2}\r
-", w.Offset, w.Value, w.Value);
+                var sb = new StringBuilder();
+                sb.AppendLine("Offset    UInt32(hex)  UInt32(dec)");
+                foreach (var w in pkg.Words)
+                    sb.AppendFormat("0x{0:X4}    0x{1:X8}   {2}\\r\\n", w.Offset, w.Value, w.Value);
                 view.Text = sb.ToString();
             }
             else if (t == "strings")
             {
                 var sb = new StringBuilder();
-                foreach (var x in pkg.Strings) sb.AppendFormat("0x{0:X8}  {1}\r
-", x.Offset, x.Text);
+                foreach (var x in pkg.Strings)
+                    sb.AppendFormat("0x{0:X8}  {1}\\r\\n", x.Offset, x.Text);
                 view.Text = sb.ToString();
             }
-            else view.Text = "File: " + pkg.Path + "\r
-Size: " + pkg.Length.ToString("N0") + " bytes";
+            else
+                view.Text = "File: " + pkg.Path + "\\r\\nSize: " + pkg.Length.ToString("N0") + " bytes";
         }
 
         void PreviewEntry(TreeNode node)
@@ -181,8 +174,14 @@ Size: " + pkg.Length.ToString("N0") + " bytes";
                 return Encoding.UTF8.GetString(data, 3, data.Length - 3);
             if (data.Length >= 2 && data[0] == 0xFF && data[1] == 0xFE)
                 return Encoding.Unicode.GetString(data, 2, data.Length - 2);
-            try { return new UTF8Encoding(false, true).GetString(data); }
-            catch (DecoderFallbackException) { return Encoding.GetEncoding(949).GetString(data); }
+            try
+            {
+                return new UTF8Encoding(false, true).GetString(data);
+            }
+            catch (DecoderFallbackException)
+            {
+                return Encoding.GetEncoding(949).GetString(data);
+            }
         }
 
         void ExtractSelected()
