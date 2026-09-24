@@ -32,15 +32,8 @@ namespace TRPKGViewer.Core
                 if (info.Probe.HeaderSize != 0x1C) throw new InvalidDataException("Invalid package header size.");
                 if (info.Probe.DecodedEntryInfoSize != PkgEntryInfoDecoder.DecodedSize) throw new InvalidDataException("Invalid entry-info size.");
                 if (info.Probe.IndexOffset >= fs.Length) throw new InvalidDataException("Invalid package index offset.");
-                // +0x24 is the index entry count used by the reader.
-                // +0x28 is retained for diagnostics only; it is not required to mirror +0x24
-                // across all package variants.
-                if (info.Probe.EntryCount == 0)
-                    throw new InvalidDataException("Package contains no index entries.");
-                long minimumIndexBytes = 12L + (long)info.Probe.EntryCount * 5L;
-                if ((long)info.Probe.IndexOffset + minimumIndexBytes > fs.Length)
-                    throw new InvalidDataException("Package entry count exceeds the available index region: " +
-                        info.Probe.EntryCount + ".");
+                // The index occupies the remainder of the package. Header DWORDs +0x24/+0x28
+                // are not entry counts; keep them only as raw diagnostic values.
                 ReadIndex(fs, info);
 
                 fs.Position = 0;
@@ -57,25 +50,19 @@ namespace TRPKGViewer.Core
             if (BitConverter.ToUInt32(indexHeader, 0) != 0)
                 throw new InvalidDataException("Invalid package index header.");
 
-            int expectedCount = checked((int)info.Probe.EntryCount);
-            for (int i = 0; i < expectedCount; i++)
+            int i = 0;
+            while (fs.Position < fs.Length)
             {
-                if (fs.Position + 4 > fs.Length)
-                {
-                    // Some package variants carry a larger header-side count.  The on-disk
-                    // index itself is authoritative: reaching EOF exactly after a complete
-                    // entry terminates the index cleanly.
-                    if (fs.Position == fs.Length && i > 0) break;
-                    throw new InvalidDataException("Index ended before entry " + i +
-                        " of header count " + info.Probe.EntryCount + " (position 0x" +
-                        fs.Position.ToString("X") + ", file size 0x" + fs.Length.ToString("X") + ").");
-                }
+                if (fs.Length - fs.Position < 4)
+                    throw new InvalidDataException("Trailing bytes at end of package index (position 0x" +
+                        fs.Position.ToString("X") + ").");
 
                 byte[] sizeBytes = new byte[4];
                 ReadExact(fs, sizeBytes, 0, 4);
                 int encodedSize = checked((int)BitConverter.ToUInt32(sizeBytes, 0));
                 if (encodedSize <= 0 || encodedSize > PkgEntryInfoDecoder.MaxEncodedSize)
-                    throw new InvalidDataException("Invalid encoded entry-info size at index " + i + ".");
+                    throw new InvalidDataException("Invalid encoded entry-info size at index " + i +
+                        " (size " + encodedSize + ", position 0x" + (fs.Position - 4).ToString("X") + ").");
 
                 if (fs.Position + encodedSize > fs.Length)
                     throw new InvalidDataException("Encoded entry-info at index " + i +
@@ -98,6 +85,7 @@ namespace TRPKGViewer.Core
                     Decoded410 = BitConverter.ToUInt32(decoded, 0x410),
                     DataOffset = BitConverter.ToUInt32(decoded, 0x414)
                 });
+                i++;
             }
         }
 
