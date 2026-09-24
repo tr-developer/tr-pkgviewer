@@ -4,7 +4,7 @@ using System.Text;
 
 namespace TRPKGViewer.Core
 {
-    public sealed class PackageCrypt
+    // Experimental reconstruction only. Not wired into extraction until known XML vectors pass.\n    public sealed class PackageCrypt
     {
         static readonly byte[] FixedKey = { 0x0D,0x68,0x07,0x6F,0x0A,0x09,0x07,0x6C,0x65,0x73,0x0D,0x75,0x6E,0x0A,0x65,0x0D };
         static readonly byte[] Seed = Encoding.ASCII.GetBytes("A73FF15DBE914FCC880037FB32E4D314");
