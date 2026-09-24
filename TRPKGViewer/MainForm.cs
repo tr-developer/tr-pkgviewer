@@ -21,6 +21,8 @@ namespace TRPKGViewer
         public MainForm()
         {
             textPipeline = new TextPayloadPipeline(decryptors);
+            // Confirmed in trgame_dump.exe .rdata at file offset 0x2A6CB78.
+            decryptors.Register(AesTextDecryptor.FromKeyString("CECA72E7ACDB485C8DF0AC16A2EA6D92"), true);
             Text = "TR PKG Viewer";
             Width = 1200; Height = 760;
 
