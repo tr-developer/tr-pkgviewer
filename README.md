@@ -90,3 +90,21 @@ That initializer builds a 16-byte-key cipher context and sets its leading initia
 Therefore the package-key preprocessing stage is mandatory for this client. A control test using ordinary OpenSSL AES-128-ECB for the first transform and AES-256-ECB for the package transform did **not** produce valid XML/TXT plaintext from real flag-`0x2` chunks. The client primitive must therefore be reproduced from its own key schedule/block routines rather than substituted with standard .NET/OpenSSL AES semantics.
 
 The sample package contains 1,437 flag-`0x2` chunks, giving a large validation corpus once the primitive is ported.
+
+
+#### Cipher primitive identification
+
+Direct disassembly of `0x7ff6480ad360` shows the key setup accepts key sizes
+`0x10`, `0x18`, or `0x20` bytes and computes the round-key word count as
+`2 * keyBytes + 6` (38/54/70 32-bit words). Input key bytes are packed as
+big-endian 32-bit words. The 16-byte branch expands words with the classic
+RotWord/SubWord/Rcon structure using the client lookup table at image offset
+`0x2039730`.
+
+The block transform at `0x7ff6480ae880` reads four big-endian state words,
+XORs the first round key, then performs four-table T-table rounds using the
+tables at image offsets `0x2039b80`, `0x2039330`, `0x203a7b0`, and
+`0x203a380`. This is structurally the Rijndael/AES round function, but the
+client tables/key-schedule constants must be compared byte-for-byte with the
+standard before replacing it with a framework AES provider. Until that table
+comparison is complete the implementation remains client-primitive-specific.
