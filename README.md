@@ -165,3 +165,22 @@ The failed `PackageCrypt.cs` composition has been removed from the project rathe
 than retained as dead/tempting production code. The extraction path continues to
 stop on flag-`0x2` with structured diagnostics. A package crypt implementation
 will be reintroduced only after the known 473-byte XML vector passes exactly.
+
+
+#### Package crypt solved for the active reader
+
+The executable contains two parallel package-crypt constructors. The earlier
+`CUMT` path uses ASCII seed `A73FF15DBE914FCC880037FB32E4D314`, but the
+reader path matching this package uses the second constructor, whose 32-byte
+ASCII seed is `CECA72E7ACDB485C8DF0AC16A2EA6D92`.
+
+Both constructors first AES-128-ECB encrypt the two 16-byte ASCII seed halves
+with fixed key `0D68076F0A09076C65730D756E0A650D`. The resulting 32 bytes
+form the AES-256 package key. Full payload blocks are AES-256-ECB decrypted;
+a final partial block is XORed with AES-256-ECB(key[0..15]).
+
+For the active seed the derived package key is
+`1193AE5FB04063423155C655DFDC5D24E9FC6FEF1E5EA691E04976C1D8D5F915`.
+This was validated against the first 473-byte flag-2 entry: output begins
+`EF BB BF 3C 3F 78 6D 6C` (UTF-8 BOM + `<?xml`) and contains the expected
+XML declaration. Package crypt is therefore enabled in `PkgEntryReader`.
