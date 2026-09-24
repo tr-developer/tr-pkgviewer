@@ -41,7 +41,11 @@ namespace TRPKGViewer
             MainMenuStrip = menu;
             Controls.Add(menu);
 
-            var split = new SplitContainer { Dock = DockStyle.Fill, SplitterDistance = 240, Panel1MinSize = 180, Panel2MinSize = 500 };
+            var split = new SplitContainer();
+            split.Dock = DockStyle.Fill;
+            split.Panel1MinSize = 160;
+            split.Panel2MinSize = 300;
+            split.SplitterDistance = 220;
             split.Panel1.Controls.Add(tree); split.Panel2.Controls.Add(view);
             tree.Dock = DockStyle.Fill; view.Dock = DockStyle.Fill;
             tree.Font = new Font(FontFamily.GenericSansSerif, 8.5f);
