@@ -108,3 +108,20 @@ tables at image offsets `0x2039b80`, `0x2039330`, `0x203a7b0`, and
 client tables/key-schedule constants must be compared byte-for-byte with the
 standard before replacing it with a framework AES provider. Until that table
 comparison is complete the implementation remains client-primitive-specific.
+
+
+#### AES table comparison
+
+The four client T-tables and key-schedule substitution table were compared
+against the canonical AES/Rijndael forward tables. The byte ordering in the
+disassembly is big-endian, but after accounting for the DWORD rotations the
+table values match the standard AES construction. The key schedule's
+RotWord/SubWord/Rcon behavior also matches AES for 128/192/256-bit keys.
+
+This means the block primitive itself can be represented by standard AES block
+operations. The earlier OpenSSL control failed because the package constructor
+does not use the visible 32-byte ASCII constant directly: it first AES-transforms
+both 16-byte halves with the fixed binary preprocessing key, then uses the
+resulting 32 bytes as the package key and separately derives the 16-byte tail
+mask. Package implementation should reproduce that composition and the client's
+block direction/order, rather than porting the large T-tables literally.
