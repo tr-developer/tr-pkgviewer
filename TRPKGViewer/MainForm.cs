@@ -15,6 +15,9 @@ namespace TRPKGViewer
         readonly TreeView tree = new TreeView();
         readonly TextBox view = new TextBox();
         readonly ToolStripStatusLabel status = new ToolStripStatusLabel();
+        readonly ToolStripMenuItem textDecryptionMenu = new ToolStripMenuItem("Text Decryption");
+        readonly ToolStripMenuItem selectedTextKeyItem = new ToolStripMenuItem();
+        TextDecryptionKey selectedTextKey;
 
         public MainForm()
         {
@@ -36,6 +39,19 @@ namespace TRPKGViewer
             extractAll.Click += (s, e) => ExtractAll();
             file.DropDownItems.Add(extractAll);
             menu.Items.Add(file);
+
+            selectedTextKeyItem.Enabled = false;
+            textDecryptionMenu.DropDownItems.Add(selectedTextKeyItem);
+            textDecryptionMenu.DropDownItems.Add(new ToolStripSeparator());
+            foreach (var key in TextDecryptionKeys.All)
+            {
+                var keyItem = new ToolStripMenuItem(key.Name);
+                keyItem.Tag = key;
+                keyItem.Click += SelectTextDecryptionKey;
+                textDecryptionMenu.DropDownItems.Add(keyItem);
+            }
+            menu.Items.Add(textDecryptionMenu);
+            SetTextDecryptionKey(null);
 
 
             MainMenuStrip = menu;
@@ -63,6 +79,24 @@ namespace TRPKGViewer
                 if (split.ClientSize.Width > target + split.SplitterWidth)
                     split.SplitterDistance = target;
             };
+        }
+
+        void SelectTextDecryptionKey(object sender, EventArgs e)
+        {
+            var item = sender as ToolStripMenuItem;
+            SetTextDecryptionKey(item == null ? null : item.Tag as TextDecryptionKey);
+        }
+
+        void SetTextDecryptionKey(TextDecryptionKey key)
+        {
+            selectedTextKey = key;
+            selectedTextKeyItem.Text = "Selected: " + (key == null ? "(None)" : key.Name);
+            foreach (ToolStripItem child in textDecryptionMenu.DropDownItems)
+            {
+                var menuItem = child as ToolStripMenuItem;
+                if (menuItem != null && menuItem.Tag is TextDecryptionKey)
+                    menuItem.Checked = ReferenceEquals(menuItem.Tag, key);
+            }
         }
 
         void OpenPkg()
