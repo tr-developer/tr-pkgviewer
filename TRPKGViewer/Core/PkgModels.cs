@@ -29,11 +29,11 @@ namespace TRPKGViewer.Core
         public string Name;
         public int EncodedInfoSize;
         public byte[] DecodedInfo;
-        public uint Decoded404;
+        public uint LogicalSize;
         public uint Decoded408;
         public uint Decoded40C;
         public uint Decoded410;
-        public uint Decoded414;
+        public uint DataOffset;
     }
 
     public sealed class PkgEntryInfo
