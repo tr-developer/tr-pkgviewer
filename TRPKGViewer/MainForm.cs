@@ -69,34 +69,54 @@ namespace TRPKGViewer
             var root = tree.Nodes.Add(Path.GetFileName(pkg.Path)); root.Tag = "summary";
             root.Nodes.Add("Header / first 4 KiB").Tag = "header";
             root.Nodes.Add("Header DWORD view").Tag = "words";
-            root.Nodes.Add("Printable strings (diagnostic)").Tag = "strings";\n            var files = root.Nodes.Add("Files (" + pkg.Entries.Count + ")");\n            foreach (var entry in pkg.Entries) files.Nodes.Add(entry.Name).Tag = entry;
+            root.Nodes.Add("Printable strings (diagnostic)").Tag = "strings";
+            var files = root.Nodes.Add("Files (" + pkg.Entries.Count + ")");
+            foreach (var entry in pkg.Entries) files.Nodes.Add(entry.Name).Tag = entry;
             root.Expand(); tree.SelectedNode = root;
         }
 
         void ShowNode(TreeNode n)
         {
             if (pkg == null) return;
-            if (n.Tag is PkgIndexEntry)\n            {\n                var e = (PkgIndexEntry)n.Tag;\n                view.Text = "#" + e.Index + "\r\n" + e.Name +
-                    "\r\nEncoded info: " + e.EncodedInfoSize + " bytes\r\nDecoded info: " + e.DecodedInfo.Length + " bytes" +
-                    "\r\n\r\nDecoded +0x404: " + e.Decoded404 +
-                    "\r\nDecoded +0x408: " + e.Decoded408 +
-                    "\r\nDecoded +0x40C: 0x" + e.Decoded40C.ToString("X8") +
-                    "\r\nDecoded +0x410: " + e.Decoded410 +
-                    "\r\nDecoded +0x414: 0x" + e.Decoded414.ToString("X8");\n                return;\n            }\n            string t = n.Tag as string;
+            if (n.Tag is PkgIndexEntry)
+            {
+                var e = (PkgIndexEntry)n.Tag;
+                view.Text = "#" + e.Index + "\r
+" + e.Name +
+                    "\r
+Encoded info: " + e.EncodedInfoSize + " bytes\r
+Decoded info: " + e.DecodedInfo.Length + " bytes" +
+                    "\r
+\r
+Decoded +0x404: " + e.Decoded404 +
+                    "\r
+Decoded +0x408: " + e.Decoded408 +
+                    "\r
+Decoded +0x40C: 0x" + e.Decoded40C.ToString("X8") +
+                    "\r
+Decoded +0x410: " + e.Decoded410 +
+                    "\r
+Decoded +0x414: 0x" + e.Decoded414.ToString("X8");
+                return;
+            }
+            string t = n.Tag as string;
             if (t == "header") view.Text = PkgReader.Hex(pkg.Header);
             else if (t == "words")
             {
                 var sb = new StringBuilder(); sb.AppendLine("Offset    UInt32(hex)  UInt32(dec)");
-                foreach (var w in pkg.Words) sb.AppendFormat("0x{0:X4}    0x{1:X8}   {2}\r\n", w.Offset, w.Value, w.Value);
+                foreach (var w in pkg.Words) sb.AppendFormat("0x{0:X4}    0x{1:X8}   {2}\r
+", w.Offset, w.Value, w.Value);
                 view.Text = sb.ToString();
             }
             else if (t == "strings")
             {
                 var sb = new StringBuilder();
-                foreach (var x in pkg.Strings) sb.AppendFormat("0x{0:X8}  {1}\r\n", x.Offset, x.Text);
+                foreach (var x in pkg.Strings) sb.AppendFormat("0x{0:X8}  {1}\r
+", x.Offset, x.Text);
                 view.Text = sb.ToString();
             }
-            else view.Text = "File: " + pkg.Path + "\r\nSize: " + pkg.Length.ToString("N0") + " bytes";
+            else view.Text = "File: " + pkg.Path + "\r
+Size: " + pkg.Length.ToString("N0") + " bytes";
         }
 
         void ExportHeader()
