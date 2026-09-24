@@ -22,7 +22,8 @@ namespace TRPKGViewer
         public MainForm()
         {
             textPipeline = new TextPayloadPipeline(decryptors);
-            // Confirmed in trgame_dump.exe .rdata at file offset 0x2A6CB78.
+            // This ASCII value is confirmed as the active package-crypt seed. The user also
+            // identified it as a text AES key; text framing/mode remains independently extensible.
             decryptors.Register(AesTextDecryptor.FromKeyString("CECA72E7ACDB485C8DF0AC16A2EA6D92"), true);
             Text = "TR PKG Viewer";
             Width = 1200; Height = 760;
@@ -122,7 +123,7 @@ Decoded info: " + e.DecodedInfo.Length + " bytes" +
             try
             {
                 byte[] payload = entryReader.Read(pkg.Path, entry);
-                payload = ProcessEntryPayload(entry.Name, IsEncryptedTextEntry(entry), payload);
+                payload = ProcessEntryPayload(entry.Name, IsEncryptedTextPayload(entry.Name, payload), payload);
                 string ext = Path.GetExtension(entry.Name);
                 if (string.Equals(ext, ".txt", StringComparison.OrdinalIgnoreCase) ||
                     string.Equals(ext, ".xml", StringComparison.OrdinalIgnoreCase))
@@ -168,7 +169,7 @@ Decoded info: " + e.DecodedInfo.Length + " bytes" +
                     byte[] payload = entryReader.Read(pkg.Path, entry);
                     // Package-level chunk crypt is handled by PkgEntryReader. Encrypted TXT
                     // must additionally pass through the selected text decrypt type.
-                    bool encryptedText = IsEncryptedTextEntry(entry);
+                    bool encryptedText = IsEncryptedTextPayload(entry.Name, payload);
                     payload = ProcessEntryPayload(entry.Name, encryptedText, payload);
                     File.WriteAllBytes(d.FileName, payload);
                     status.Text = "Extracted " + entry.Name + " (" + payload.Length.ToString("N0") + " bytes)";
@@ -177,11 +178,42 @@ Decoded info: " + e.DecodedInfo.Length + " bytes" +
             }
         }
 
-        static bool IsEncryptedTextEntry(PkgIndexEntry entry)
+        static bool IsEncryptedTextPayload(string entryName, byte[] payload)
         {
-            // +0x410 is not an encrypted-TXT marker: the sample contains ordinary
-            // UTF-16/CP949/ASCII TXT files with many nonzero values here.
-            // Keep TXT crypt detection separate until its actual framing marker is proven.
+            if (!string.Equals(Path.GetExtension(entryName), ".txt", StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            // +0x410 is not an encrypted-TXT marker: it is 1 for the known plain TXT
+            // population in tr4.pkg. Decide only after package-level decoding.
+            if (payload.Length >= 2 && payload[0] == 0xFF && payload[1] == 0xFE)
+                return false;
+            if (payload.Length >= 3 && payload[0] == 0xEF && payload[1] == 0xBB && payload[2] == 0xBF)
+                return false;
+
+            return !LooksLikeText(payload);
+        }
+
+        static bool LooksLikeText(byte[] payload)
+        {
+            Encoding[] encodings =
+            {
+                new UTF8Encoding(false, true),
+                Encoding.GetEncoding(949, EncoderFallback.ExceptionFallback, DecoderFallback.ExceptionFallback)
+            };
+
+            foreach (Encoding encoding in encodings)
+            {
+                try
+                {
+                    string text = encoding.GetString(payload);
+                    if (text.Length == 0) return true;
+                    int good = 0;
+                    foreach (char ch in text)
+                        if (!char.IsControl(ch) || ch == '\r' || ch == '\n' || ch == '\t') good++;
+                    if (good * 100 >= text.Length * 95) return true;
+                }
+                catch (DecoderFallbackException) { }
+            }
             return false;
         }
 
