@@ -24,6 +24,23 @@ Encrypted TXT entries are always routed through `TextPayloadPipeline` and text d
 
 Open `TRPKGViewer.sln` in Visual Studio with the .NET Framework 4.8 Developer Pack installed and build the solution.
 
+## Recovered CUMTPackageReader entry path
+
+Static analysis of the supplied dump located the code path that logs `CUMTPackageReader::open(%s)... %dms`.
+
+The reader repeatedly:
+
+1. reads a 32-bit encoded block length,
+2. rejects zero or values above `0x8F2`,
+3. processes that block into a fixed `0x51C`-byte entry-info buffer,
+4. validates that the resulting size is exactly `0x51C`,
+5. lower-cases the path/name contained in the decoded buffer,
+6. materializes an internal entry record with a stride of exactly `0xE5` bytes.
+
+The recovered materialized record begins with a `0x80`-byte name/path area. Additional copied fields are present at offsets `0x80`, `0x84`, `0x88`, `0x8C`, `0x90`, `0x94`, `0x98`, `0x9C..0xB3`, `0xB4`, `0xB8..0xCF`, `0xD0`, `0xD4`, and `0xD5..0xE4`. These are now represented by `PkgEntryInfo`; unknown fields remain neutrally named until their semantics are proven.
+
+This also explains the dump string `Invalid CUMTPackageFileEntryInfo size!`: the decoded entry-info object is expected to be `0x51C` bytes.
+
 ## Next reverse-engineering target
 
-Recover the concrete `CUMTPackageReader::open` / `CUMTPackageFileEntryReader` field layout from the supplied dump, then implement file table enumeration and extraction without guessed offsets.
+Identify the routine called to transform each encoded entry block into the fixed `0x51C` entry-info buffer, then map the recovered `0xE5` fields to data offset, packed size, unpacked size and encryption/compression flags. Once those semantics are proven, wire the entry table into the tree and extractor.
