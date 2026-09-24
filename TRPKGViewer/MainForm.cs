@@ -70,8 +70,33 @@ namespace TRPKGViewer
             root.Nodes.Add("Header DWORD view").Tag = "words";
             root.Nodes.Add("Printable strings (diagnostic)").Tag = "strings";
             var files = root.Nodes.Add("Files (" + pkg.Entries.Count + ")");
-            foreach (var entry in pkg.Entries) files.Nodes.Add(entry.Name).Tag = entry;
-            root.Expand(); tree.SelectedNode = root;
+            foreach (var entry in pkg.Entries) AddEntryNode(files, entry);
+            root.Expand(); files.Expand(); tree.SelectedNode = root;
+        }
+
+        static void AddEntryNode(TreeNode filesRoot, PkgIndexEntry entry)
+        {
+            string[] parts = entry.Name.Replace('/', '\\').Split(new[] { '\\' }, StringSplitOptions.RemoveEmptyEntries);
+            TreeNode parent = filesRoot;
+            for (int i = 0; i < parts.Length; i++)
+            {
+                bool leaf = i == parts.Length - 1;
+                if (leaf)
+                {
+                    parent.Nodes.Add(parts[i]).Tag = entry;
+                    continue;
+                }
+
+                TreeNode next = null;
+                foreach (TreeNode child in parent.Nodes)
+                    if (!(child.Tag is PkgIndexEntry) && string.Equals(child.Text, parts[i], StringComparison.OrdinalIgnoreCase))
+                    {
+                        next = child;
+                        break;
+                    }
+                if (next == null) next = parent.Nodes.Add(parts[i]);
+                parent = next;
+            }
         }
 
         void ShowNode(TreeNode n)
