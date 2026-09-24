@@ -26,7 +26,9 @@ namespace TRPKGViewer.Core
                     uint index = BitConverter.ToUInt32(h, 0);
                     int unpacked = checked((int)BitConverter.ToUInt32(h, 4));
                     int stored = checked((int)BitConverter.ToUInt32(h, 8));
-                    BitConverter.ToUInt32(h, 12); // +0x0C remains unnamed; retained by format analysis only.\n                    uint flags = BitConverter.ToUInt32(h, 16);
+                    uint value0C = BitConverter.ToUInt32(h, 12); // intentionally unnamed diagnostic field
+                    uint flags = BitConverter.ToUInt32(h, 16);
+                    _ = value0C;
                     if (index != (uint)chunkIndex) throw new InvalidDataException("Invalid chunk index.");
                     if (unpacked < 0 || unpacked > MaxChunkSize || stored < 0 || pos + ChunkHeaderSize + stored > fs.Length)
                         throw new InvalidDataException("Invalid chunk size.");
