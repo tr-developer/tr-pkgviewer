@@ -48,7 +48,15 @@ namespace TRPKGViewer.Core
                 int nameLength = 0;
                 while (nameLength < 0x80 && decoded[nameLength] != 0) nameLength++;
                 string name = Encoding.ASCII.GetString(decoded, 0, nameLength).ToLowerInvariant();
-                info.Entries.Add(new PkgIndexEntry { Index = i, Name = name, EncodedInfoSize = encodedSize, DecodedInfo = decoded });
+                info.Entries.Add(new PkgIndexEntry
+                {
+                    Index = i, Name = name, EncodedInfoSize = encodedSize, DecodedInfo = decoded,
+                    Decoded404 = BitConverter.ToUInt32(decoded, 0x404),
+                    Decoded408 = BitConverter.ToUInt32(decoded, 0x408),
+                    Decoded40C = BitConverter.ToUInt32(decoded, 0x40C),
+                    Decoded410 = BitConverter.ToUInt32(decoded, 0x410),
+                    Decoded414 = BitConverter.ToUInt32(decoded, 0x414)
+                });
             }
         }
 
