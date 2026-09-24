@@ -141,3 +141,19 @@ output. Therefore that composition is **not validated and is disabled in
 This falsifies at least one assumed direction/input in the constructor chain.
 The next implementation must be accepted only when this 473-byte XML entry
 (and additional TXT/XML samples) decodes to structurally valid plaintext.
+
+
+#### Block-direction and validation checkpoint
+
+Client call flow distinguishes the two AES block directions: `0x7ff6480ae880`
+is the forward/encrypt block transform and `0x7ff6480aef30` is the inverse/decrypt
+block transform. The package seed preprocessing and tail-mask derivation use the
+forward transform; flag-`0x2` payload processing reaches the inverse transform
+through the decrypt wrapper at `0x7ff64809d990`.
+
+Therefore the failed known-XML control is not explained by simply swapping AES
+encrypt/decrypt directions. The active package context used by the reader comes
+from the package-crypt singleton and must be traced through its complete
+initialization/state path. The first known XML vector has chunk header:
+index=0, unpacked=473, stored=473, DWORD3=`0x500AF46B`, flags=`0x2`.
+DWORD3 remains deliberately unnamed until its reader-side use is proven.
