@@ -55,3 +55,25 @@ This also explains the dump string `Invalid CUMTPackageFileEntryInfo size!`: the
 The package header and version-2 signature XOR path are now recovered, including the absolute index seek at file `+0x14`. Across all decoded `0x51C` records, the meaningful tail data is concentrated around decoded offsets `0x404..0x417` and `0x50B..0x51B`. The viewer now exposes the DWORDs at `0x404`, `0x408`, `0x40C`, `0x410`, and `0x414` per file for comparison. A direct scan of all 473 decoded records against the supplied package gives stronger constraints: decoded `+0x404` ranges from 18 to 57,965,868 and `+0x408` from 38 to 22,562,731, with both always below the package length and behaving like size-related values. Decoded `+0x40C` has 470 distinct values and only 302/473 are below the package length, so it is definitively not a plain absolute file offset. Decoded `+0x410` is usually 1 (437/473) but has several small alternate values, making it a likely mode/flag/count field rather than a byte size. Byte `+0x50B` is exactly 1 for all 473 entries, followed by a 16-byte per-entry value at `+0x50C..0x51B`; this tail is now a prime package-crypt/integrity candidate. Field semantics remain unlabelled until the corresponding reader routine is traced. The encoded entry-info transform is zlib-compatible decompression and is implemented by `PkgEntryInfoDecoder`. Further disassembly of the package file-entry reader recovered its block-cache format. The reader works in logical blocks of exactly `0x19000` (102,400) bytes. Each cached block record is `0x30` bytes and the on-disk block header is exactly `0x14` bytes. The block header contains five 32-bit values: block index, stored payload size (validated <= `0x19000`), logical/unpacked block size, and two additional integrity/crypt fields. The reader computes each next block's physical position as `previousBlockOffset + previousStoredPayloadSize + 0x14`; the first block starts from a base data offset held by the file-entry reader. Reads then copy from `cachedBlockPayload + 0x10 + (logicalPosition % 0x19000)`, confirming a 16-byte prefix in the decoded/cache payload.
 
 This is a major constraint on the remaining mapping: the per-entry metadata must provide the base data offset and logical file size used to initialize the file-entry reader; `+0x40C` is not that raw offset. The next target is the constructor/open path that transfers fields from the materialized `0xE5` entry into the file-entry reader, which should identify the base offset and compression/crypt mode directly. Once those semantics are proven, wire the entry table into the tree and extractor.
+
+
+### Package crypt initialization (verified from client disassembly)
+
+The package-crypt constructor at `0x7ff646bbefc0` copies the 32 ASCII bytes
+`A73FF15DBE914FCC880037FB32E4D314` from `.rdata`. If the crypt object's
+preprocess flag at `+0x08` is set, each 16-byte half is transformed in-place
+through the already-initialized cipher context at `+0x0C`. The resulting
+32 bytes are then passed to the cipher initializer at `0x7ff64809d780` with
+an explicit key length of `0x20`.
+
+`0x7ff64809d780` clears exactly `0x10A0` bytes of expanded cipher state,
+calls the key-schedule routine at `0x7ff6480ad360`, and derives the 16-byte
+tail mask stored at context `+0x10A4` by encrypting the first 16 bytes of the
+key with the newly-created context. The package reader later handles chunk
+flag `0x2` by calling the decrypt wrapper at `0x7ff64809d990` only after
+optional zlib expansion. Full 16-byte blocks use `0x7ff6480aef30`; the final
+partial block is XORed with that derived tail mask.
+
+This confirms that the visible 32-byte package constant is input key material,
+but it must not be hard-coded as the final raw key until the object's `+0x08`
+preprocess state and its `+0x0C` context initialization are recovered.
