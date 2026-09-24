@@ -10,7 +10,8 @@ namespace TRPKGViewer
 {
     public sealed class MainForm : Form
     {
-        readonly PkgReader reader = new PkgReader();\n        readonly PkgEntryReader entryReader = new PkgEntryReader();
+        readonly PkgReader reader = new PkgReader();
+        readonly PkgEntryReader entryReader = new PkgEntryReader();
         readonly TextDecryptorRegistry decryptors = new TextDecryptorRegistry();
         readonly TextPayloadPipeline textPipeline;
         PkgInfo pkg;
@@ -94,7 +95,7 @@ Encoded info: " + e.EncodedInfoSize + " bytes\r
 Decoded info: " + e.DecodedInfo.Length + " bytes" +
                     "\r
 \r
-Decoded +0x404: " + e.Decoded404 +
+Decoded +0x404: " + e.LogicalSize +
                     "\r
 Decoded +0x408: " + e.Decoded408 +
                     "\r
@@ -102,7 +103,7 @@ Decoded +0x40C: 0x" + e.Decoded40C.ToString("X8") +
                     "\r
 Decoded +0x410: " + e.Decoded410 +
                     "\r
-Decoded +0x414: 0x" + e.Decoded414.ToString("X8");
+Decoded +0x414: 0x" + e.DataOffset.ToString("X8");
                 return;
             }
             string t = n.Tag as string;
@@ -145,7 +146,9 @@ Size: " + pkg.Length.ToString("N0") + " bytes";
             }
             catch (PackageCryptRequiredException ex)
             {
-                view.Text = ex.Message + "\r\n\r\nPackage crypt is required before this entry can be previewed.";
+                view.Text = ex.Message + "\r
+\r
+Package crypt is required before this entry can be previewed.";
             }
             catch (Exception ex) { MessageBox.Show(ex.Message, "Preview failed"); }
         }
