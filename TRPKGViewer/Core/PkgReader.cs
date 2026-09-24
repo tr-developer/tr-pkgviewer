@@ -32,9 +32,9 @@ namespace TRPKGViewer.Core
                 if (info.Probe.HeaderSize != 0x1C) throw new InvalidDataException("Invalid package header size.");
                 if (info.Probe.DecodedEntryInfoSize != PkgEntryInfoDecoder.DecodedSize) throw new InvalidDataException("Invalid entry-info size.");
                 if (info.Probe.IndexOffset >= fs.Length) throw new InvalidDataException("Invalid package index offset.");
-                if (info.Probe.EntryCount != info.Probe.EntryCountMirror)
-                    throw new InvalidDataException("Package entry-count fields do not match (" +
-                        info.Probe.EntryCount + " / " + info.Probe.EntryCountMirror + ").");
+                // +0x24 is the index entry count used by the reader.
+                // +0x28 is retained for diagnostics only; it is not required to mirror +0x24
+                // across all package variants.
                 if (info.Probe.EntryCount == 0)
                     throw new InvalidDataException("Package contains no index entries.");
                 long minimumIndexBytes = 12L + (long)info.Probe.EntryCount * 5L;
