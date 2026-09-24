@@ -10,7 +10,7 @@ namespace TRPKGViewer
 {
     public sealed class MainForm : Form
     {
-        readonly PkgReader reader = new PkgReader();
+        readonly PkgReader reader = new PkgReader();\n        readonly PkgEntryReader entryReader = new PkgEntryReader();
         readonly TextDecryptorRegistry decryptors = new TextDecryptorRegistry();
         readonly TextPayloadPipeline textPipeline;
         PkgInfo pkg;
@@ -32,6 +32,9 @@ namespace TRPKGViewer
             var export = new ToolStripMenuItem("Export header...");
             export.Click += (s, e) => ExportHeader();
             file.DropDownItems.Add(export);
+            var extract = new ToolStripMenuItem("Extract selected...");
+            extract.Click += (s, e) => ExtractSelected();
+            file.DropDownItems.Add(extract);
             menu.Items.Add(file);
 
             var tools = new ToolStripMenuItem("Tools");
@@ -117,6 +120,35 @@ Decoded +0x414: 0x" + e.Decoded414.ToString("X8");
             }
             else view.Text = "File: " + pkg.Path + "\r
 Size: " + pkg.Length.ToString("N0") + " bytes";
+        }
+
+        void ExtractSelected()
+        {
+            if (pkg == null || tree.SelectedNode == null || !(tree.SelectedNode.Tag is PkgIndexEntry)) return;
+            var entry = (PkgIndexEntry)tree.SelectedNode.Tag;
+            using (var d = new SaveFileDialog { FileName = Path.GetFileName(entry.Name), Filter = "All files (*.*)|*.*" })
+            {
+                if (d.ShowDialog() != DialogResult.OK) return;
+                try
+                {
+                    byte[] payload = entryReader.Read(pkg.Path, entry);
+                    // Package-level chunk crypt is handled by PkgEntryReader. Encrypted TXT
+                    // must additionally pass through the selected text decrypt type.
+                    bool encryptedText = IsEncryptedTextEntry(entry);
+                    payload = ProcessEntryPayload(entry.Name, encryptedText, payload);
+                    File.WriteAllBytes(d.FileName, payload);
+                    status.Text = "Extracted " + entry.Name + " (" + payload.Length.ToString("N0") + " bytes)";
+                }
+                catch (Exception ex) { MessageBox.Show(ex.Message, "Extract failed"); }
+            }
+        }
+
+        static bool IsEncryptedTextEntry(PkgIndexEntry entry)
+        {
+            if (!string.Equals(Path.GetExtension(entry.Name), ".txt", StringComparison.OrdinalIgnoreCase)) return false;
+            // Decoded +0x410 is the entry mode/flag field. Until its individual bits are
+            // fully named, any nonzero TXT mode is conservatively treated as encrypted.
+            return entry.Decoded410 != 0;
         }
 
         void ExportHeader()
