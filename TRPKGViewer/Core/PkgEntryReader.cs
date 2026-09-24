@@ -6,6 +6,7 @@ namespace TRPKGViewer.Core
 {
     public sealed class PkgEntryReader
     {
+        readonly PackageCrypt packageCrypt = new PackageCrypt();
         const int ChunkHeaderSize = 0x14;
         const int MaxChunkSize = 0x19000;
 
@@ -34,7 +35,7 @@ namespace TRPKGViewer.Core
                     ReadExact(fs, payload, 0, stored);
                     byte[] data = (flags & 1) != 0 ? InflateZlib(payload, unpacked) : payload;
                     if ((flags & 2) != 0)
-                        throw new PackageCryptRequiredException(entry.Name, chunkIndex, pos, unpacked, stored, value0C, flags);
+                        data = packageCrypt.Decrypt(data);
                     if (data.Length != unpacked) throw new InvalidDataException("Chunk unpacked-size mismatch.");
                     output.Write(data, 0, data.Length);
                     pos += ChunkHeaderSize + stored;
