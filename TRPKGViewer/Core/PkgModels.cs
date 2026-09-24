@@ -9,7 +9,7 @@ namespace TRPKGViewer.Core
         public byte[] Header;
         public List<PkgWord> Words = new List<PkgWord>();
         public List<AsciiRun> Strings = new List<AsciiRun>();
-        public PkgHeaderProbe Probe;
+        public PkgHeaderProbe Probe;\n        public List<PkgIndexEntry> Entries = new List<PkgIndexEntry>();
     }
 
     public sealed class PkgHeaderProbe
@@ -21,6 +21,14 @@ namespace TRPKGViewer.Core
         public uint DecodedEntryInfoSize; // file +0x1C, must be 0x51C
         public uint Value24;
         public uint Value28;
+    }
+
+    public sealed class PkgIndexEntry
+    {
+        public int Index;
+        public string Name;
+        public int EncodedInfoSize;
+        public byte[] DecodedInfo;
     }
 
     // Recovered from CUMTPackageReader::open in the supplied dump.
