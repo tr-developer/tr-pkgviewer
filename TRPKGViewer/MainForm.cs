@@ -52,6 +52,7 @@ namespace TRPKGViewer
             view.Multiline = true; view.ScrollBars = ScrollBars.Both;
             view.Font = new Font(FontFamily.GenericMonospace, 9); view.WordWrap = false;
             tree.AfterSelect += (s, e) => ShowNode(e.Node);
+            tree.NodeMouseDoubleClick += (s, e) => PreviewEntry(e.Node);
 
             var ss = new StatusStrip(); ss.Items.Add(status);
             Controls.Add(ss); Controls.Add(split);
@@ -120,6 +121,47 @@ Decoded +0x414: 0x" + e.Decoded414.ToString("X8");
             }
             else view.Text = "File: " + pkg.Path + "\r
 Size: " + pkg.Length.ToString("N0") + " bytes";
+        }
+
+        void PreviewEntry(TreeNode node)
+        {
+            if (pkg == null || node == null || !(node.Tag is PkgIndexEntry)) return;
+            var entry = (PkgIndexEntry)node.Tag;
+            try
+            {
+                byte[] payload = entryReader.Read(pkg.Path, entry);
+                payload = ProcessEntryPayload(entry.Name, IsEncryptedTextEntry(entry), payload);
+                string ext = Path.GetExtension(entry.Name);
+                if (string.Equals(ext, ".txt", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(ext, ".xml", StringComparison.OrdinalIgnoreCase))
+                {
+                    view.Text = DecodeText(payload);
+                    status.Text = "Preview " + entry.Name + " (" + payload.Length.ToString("N0") + " bytes)";
+                }
+                else
+                    view.Text = PkgReader.Hex(payload.Length > 65536 ? Slice(payload, 65536) : payload);
+            }
+            catch (PackageCryptRequiredException ex)
+            {
+                view.Text = ex.Message + "\r\n\r\nPackage crypt is required before this entry can be previewed.";
+            }
+            catch (Exception ex) { MessageBox.Show(ex.Message, "Preview failed"); }
+        }
+
+        static byte[] Slice(byte[] data, int count)
+        {
+            byte[] b = new byte[Math.Min(data.Length, count)];
+            Buffer.BlockCopy(data, 0, b, 0, b.Length);
+            return b;
+        }
+
+        static string DecodeText(byte[] data)
+        {
+            if (data.Length >= 3 && data[0] == 0xEF && data[1] == 0xBB && data[2] == 0xBF)
+                return Encoding.UTF8.GetString(data, 3, data.Length - 3);
+            if (data.Length >= 2 && data[0] == 0xFF && data[1] == 0xFE)
+                return Encoding.Unicode.GetString(data, 2, data.Length - 2);
+            return Encoding.UTF8.GetString(data);
         }
 
         void ExtractSelected()
