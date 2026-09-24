@@ -18,7 +18,7 @@ Text decryption is intentionally independent from PKG parsing:
 - `TextDecryptorRegistry`
 - `AesTextDecryptor`
 
-Keys are registered by version (for example `2026`). AES mode/IV/KDF can be replaced per version without changing the package parser.
+Encrypted TXT entries are always routed through text decryption before preview/export. The extension point is the decrypt **type**, not a version-to-key mapping. `aeskey` is the initial type. Additional algorithms can be added by implementing `ITextDecryptor` and registering the new type. Package parsing remains independent from text decryption.
 
 ## Build
 
