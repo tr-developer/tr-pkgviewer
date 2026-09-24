@@ -8,7 +8,16 @@ The supplied game dump contains RTTI / diagnostic strings for `CUMTPackageReader
 
 A nearby package-crypt area contains the 32-character constant `A73FF15DBE914FCC880037FB32E4D314`. The project records that as a reverse-engineering lead only; it does not assume that it is a text AES key.
 
-The supplied `tr4.pkg` is 96,701,627 bytes. Its first DWORDs include `0x0C=2`, `0x14=96,259,453`, `0x18=28`, `0x1C=1308`, and matching values `0x24=0x28=473`. These are recorded as candidate header fields only; their semantics are not assumed until the reader code is recovered. The sample begins with binary metadata and a simple plaintext scan does not reveal a reliable file-name table. For that reason, the initial parser does not invent entry offsets or structures. It provides header, DWORD, hex and printable-string diagnostics while the exact `CUMTPackageReader` layout is recovered.
+The supplied `tr4.pkg` is 96,701,627 bytes. The dump now confirms several header semantics rather than merely suggesting them:
+
+- file `+0x0C`: package version; the sample is version `2`
+- file `+0x14`: absolute index/metadata seek offset; the sample points to `96,259,453`
+- file `+0x18`: package header size; the reader requires exactly `0x1C`
+- file `+0x1C`: decoded entry-info size; the reader requires exactly `0x51C`
+
+The first 12 bytes are a package signature. For version 2 the client XORs those 12 bytes with a fixed package-crypt byte sequence and then compares the result to ASCII `ACAC35E5-4B7`. From the supplied sample, the corresponding 12-byte XOR sequence is `05 5B CB 64 FB C2 CE B4 77 8B 1B B8`. This is package-format crypt and is kept separate from encrypted TXT decryption.
+
+At the index offset, the reader consumes a 12-byte index header, requires its first DWORD to be zero, and bounds the following count/value to at most 1000 before allocating the `0xE5` entry array. For that reason, the initial parser does not invent entry offsets or structures. It provides header, DWORD, hex and printable-string diagnostics while the exact `CUMTPackageReader` layout is recovered.
 
 ## Text decrypt architecture
 
@@ -43,4 +52,4 @@ This also explains the dump string `Invalid CUMTPackageFileEntryInfo size!`: the
 
 ## Next reverse-engineering target
 
-The encoded entry-info transform has now been identified as zlib-compatible decompression and is implemented by `PkgEntryInfoDecoder`. The next target is the package stream/crypt layer that feeds those zlib blocks, followed by mapping the recovered `0xE5` fields to data offset, packed size, unpacked size and encryption/compression flags. Once those semantics are proven, wire the entry table into the tree and extractor.
+The package header and version-2 signature XOR path are now recovered, including the absolute index seek at file `+0x14`. The encoded entry-info transform is zlib-compatible decompression and is implemented by `PkgEntryInfoDecoder`. The next target is decoding the 12-byte index header/count and then mapping the recovered `0xE5` fields to data offset, packed size, unpacked size and encryption/compression flags. Once those semantics are proven, wire the entry table into the tree and extractor.
