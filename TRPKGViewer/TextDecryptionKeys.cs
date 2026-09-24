@@ -23,8 +23,7 @@ namespace TRPKGViewer
 
         static TextDecryptionKeys()
         {
-            // Add text-decryption keys here. Example:
-            // AddKey("Example", "0123456789ABCDEF0123456789ABCDEF");
+            AddKey("KR_2026", "CECA72E7ACDB485C8DF0AC16A2EA6D92");
         }
 
         public static void AddKey(string name, string key)
