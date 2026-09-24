@@ -88,22 +88,14 @@ namespace TRPKGViewer
             if (n.Tag is PkgIndexEntry)
             {
                 var e = (PkgIndexEntry)n.Tag;
-                view.Text = "#" + e.Index + "\r
-" + e.Name +
-                    "\r
-Encoded info: " + e.EncodedInfoSize + " bytes\r
+                view.Text = "#" + e.Index + "\\r\\n" + e.Name +
+                    "\\r\\nEncoded info: " + e.EncodedInfoSize + " bytes\r
 Decoded info: " + e.DecodedInfo.Length + " bytes" +
-                    "\r
-\r
-Decoded +0x404: " + e.LogicalSize +
-                    "\r
-Decoded +0x408: " + e.Decoded408 +
-                    "\r
-Decoded +0x40C: 0x" + e.Decoded40C.ToString("X8") +
-                    "\r
-Decoded +0x410: " + e.Decoded410 +
-                    "\r
-Decoded +0x414: 0x" + e.DataOffset.ToString("X8");
+                    "\\r\\n\\r\\nDecoded +0x404: " + e.LogicalSize +
+                    "\\r\\nDecoded +0x408: " + e.Decoded408 +
+                    "\\r\\nDecoded +0x40C: 0x" + e.Decoded40C.ToString("X8") +
+                    "\\r\\nDecoded +0x410: " + e.Decoded410 +
+                    "\\r\\nDecoded +0x414: 0x" + e.DataOffset.ToString("X8");
                 return;
             }
             string t = n.Tag as string;
@@ -111,19 +103,16 @@ Decoded +0x414: 0x" + e.DataOffset.ToString("X8");
             else if (t == "words")
             {
                 var sb = new StringBuilder(); sb.AppendLine("Offset    UInt32(hex)  UInt32(dec)");
-                foreach (var w in pkg.Words) sb.AppendFormat("0x{0:X4}    0x{1:X8}   {2}\r
-", w.Offset, w.Value, w.Value);
+                foreach (var w in pkg.Words) sb.AppendFormat("0x{0:X4}    0x{1:X8}   {2}\\r\\n", w.Offset, w.Value, w.Value);
                 view.Text = sb.ToString();
             }
             else if (t == "strings")
             {
                 var sb = new StringBuilder();
-                foreach (var x in pkg.Strings) sb.AppendFormat("0x{0:X8}  {1}\r
-", x.Offset, x.Text);
+                foreach (var x in pkg.Strings) sb.AppendFormat("0x{0:X8}  {1}\\r\\n", x.Offset, x.Text);
                 view.Text = sb.ToString();
             }
-            else view.Text = "File: " + pkg.Path + "\r
-Size: " + pkg.Length.ToString("N0") + " bytes";
+            else view.Text = "File: " + pkg.Path + "\\r\\nSize: " + pkg.Length.ToString("N0") + " bytes";
         }
 
         void PreviewEntry(TreeNode node)
@@ -146,9 +135,7 @@ Size: " + pkg.Length.ToString("N0") + " bytes";
             }
             catch (PackageCryptRequiredException ex)
             {
-                view.Text = ex.Message + "\r
-\r
-Package crypt is required before this entry can be previewed.";
+                view.Text = ex.Message + "\\r\\n\\r\\nPackage crypt is required before this entry can be previewed.";
             }
             catch (Exception ex) { MessageBox.Show(ex.Message, "Preview failed"); }
         }
