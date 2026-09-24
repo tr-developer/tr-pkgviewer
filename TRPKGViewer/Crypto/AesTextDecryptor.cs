@@ -1,27 +1,26 @@
 using System;
 using System.Security.Cryptography;
+using System.Text;
 
 namespace TRPKGViewer.Crypto
 {
-    // Text decryption is deliberately independent from package parsing.
-    // Register one implementation per client version (for example "2026").
+    // "aeskey" decrypt type. Replace/extend this class when the real game's
+    // AES mode, IV derivation or key material is recovered.
     public sealed class AesTextDecryptor : ITextDecryptor
     {
         readonly byte[] key;
         readonly byte[] iv;
+        public string Name { get { return "aeskey"; } }
 
-        public string Version { get; private set; }
-        public string Name { get { return Version + " / AES"; } }
-
-        public AesTextDecryptor(string version, byte[] key, byte[] iv = null)
+        public AesTextDecryptor(byte[] key, byte[] iv = null)
         {
-            Version = version;
             this.key = key ?? throw new ArgumentNullException("key");
             this.iv = iv ?? new byte[16];
         }
 
-        public byte[] Decrypt(byte[] data)
+        public byte[] Decrypt(byte[] encryptedData)
         {
+            if (encryptedData == null) throw new ArgumentNullException("encryptedData");
             using (var aes = Aes.Create())
             {
                 aes.Key = key;
@@ -29,16 +28,32 @@ namespace TRPKGViewer.Crypto
                 aes.Mode = CipherMode.CBC;
                 aes.Padding = PaddingMode.PKCS7;
                 using (var decryptor = aes.CreateDecryptor())
-                    return decryptor.TransformFinalBlock(data, 0, data.Length);
+                    return decryptor.TransformFinalBlock(encryptedData, 0, encryptedData.Length);
             }
         }
 
-        public static AesTextDecryptor FromHex(string version, string hexKey)
+        public static AesTextDecryptor FromKeyString(string keyText)
         {
-            if (hexKey == null || hexKey.Length % 2 != 0) throw new ArgumentException("Invalid hex key");
-            var k = new byte[hexKey.Length / 2];
-            for (int i = 0; i < k.Length; i++) k[i] = Convert.ToByte(hexKey.Substring(i * 2, 2), 16);
-            return new AesTextDecryptor(version, k);
+            if (string.IsNullOrEmpty(keyText)) throw new ArgumentException("AES key is empty.");
+            byte[] key;
+            if (IsHex(keyText))
+            {
+                key = new byte[keyText.Length / 2];
+                for (int i = 0; i < key.Length; i++) key[i] = Convert.ToByte(keyText.Substring(i * 2, 2), 16);
+            }
+            else key = Encoding.UTF8.GetBytes(keyText);
+
+            if (key.Length != 16 && key.Length != 24 && key.Length != 32)
+                throw new ArgumentException("AES key must be 16, 24 or 32 bytes.");
+            return new AesTextDecryptor(key);
+        }
+
+        static bool IsHex(string s)
+        {
+            if (s.Length == 0 || s.Length % 2 != 0) return false;
+            for (int i = 0; i < s.Length; i++)
+                if (!Uri.IsHexDigit(s[i])) return false;
+            return true;
         }
     }
 }
