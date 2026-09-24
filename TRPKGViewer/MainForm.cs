@@ -69,14 +69,14 @@ namespace TRPKGViewer
             var root = tree.Nodes.Add(Path.GetFileName(pkg.Path)); root.Tag = "summary";
             root.Nodes.Add("Header / first 4 KiB").Tag = "header";
             root.Nodes.Add("Header DWORD view").Tag = "words";
-            root.Nodes.Add("Printable strings (diagnostic)").Tag = "strings";
+            root.Nodes.Add("Printable strings (diagnostic)").Tag = "strings";\n            var files = root.Nodes.Add("Files (" + pkg.Entries.Count + ")");\n            foreach (var entry in pkg.Entries) files.Nodes.Add(entry.Name).Tag = entry;
             root.Expand(); tree.SelectedNode = root;
         }
 
         void ShowNode(TreeNode n)
         {
             if (pkg == null) return;
-            string t = n.Tag as string;
+            if (n.Tag is PkgIndexEntry)\n            {\n                var e = (PkgIndexEntry)n.Tag;\n                view.Text = "#" + e.Index + "\\r\\n" + e.Name + "\\r\\nEncoded info: " + e.EncodedInfoSize + " bytes\\r\\nDecoded info: " + e.DecodedInfo.Length + " bytes";\n                return;\n            }\n            string t = n.Tag as string;
             if (t == "header") view.Text = PkgReader.Hex(pkg.Header);
             else if (t == "words")
             {
