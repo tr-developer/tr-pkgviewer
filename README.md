@@ -6,7 +6,7 @@ C# / .NET Framework 4.8 / WinForms viewer for TR PKG files.
 
 The supplied game dump contains RTTI / diagnostic strings for `CUMTPackageReader`, `CUMTPackageFileEntryReader`, `CUMTPackageCryptBase`, `CUMTPackageCrypt`, and `CUMTPackageWriter`, plus `Invalid CUMTPackageFileEntryInfo size!`. This strongly indicates a custom UMT package path rather than ZIP-compatible archive handling.
 
-A nearby package-crypt area contains the 32-character constant `A73FF15DBE914FCC880037FB32E4D314`. The project records that as a reverse-engineering lead only; it does not assume that it is a text AES key.
+The package-crypt class constructor initializes a fixed 32-byte ASCII key buffer with `A73FF15DBE914FCC880037FB32E4D314`. This belongs to `CUMTPackageCrypt` / package chunk processing and is not the encrypted-TXT AES key. The chunk reader calls the crypt object only after optional zlib expansion, so the transform operates on the unpacked chunk buffer. The virtual crypt call receives the chunk buffer plus its unpacked byte count; no file-path text is passed at that call site.
 
 The supplied `tr4.pkg` is 96,701,627 bytes. The dump now confirms several header semantics rather than merely suggesting them:
 
