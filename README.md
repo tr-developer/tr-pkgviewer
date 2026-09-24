@@ -32,7 +32,7 @@ The reader repeatedly:
 
 1. reads a 32-bit encoded block length,
 2. rejects zero or values above `0x8F2`,
-3. processes that block into a fixed `0x51C`-byte entry-info buffer,
+3. decompresses that block through a zlib `uncompress2`-style routine into a fixed `0x51C`-byte entry-info buffer,
 4. validates that the resulting size is exactly `0x51C`,
 5. lower-cases the path/name contained in the decoded buffer,
 6. materializes an internal entry record with a stride of exactly `0xE5` bytes.
@@ -43,4 +43,4 @@ This also explains the dump string `Invalid CUMTPackageFileEntryInfo size!`: the
 
 ## Next reverse-engineering target
 
-Identify the routine called to transform each encoded entry block into the fixed `0x51C` entry-info buffer, then map the recovered `0xE5` fields to data offset, packed size, unpacked size and encryption/compression flags. Once those semantics are proven, wire the entry table into the tree and extractor.
+The encoded entry-info transform has now been identified as zlib-compatible decompression and is implemented by `PkgEntryInfoDecoder`. The next target is the package stream/crypt layer that feeds those zlib blocks, followed by mapping the recovered `0xE5` fields to data offset, packed size, unpacked size and encryption/compression flags. Once those semantics are proven, wire the entry table into the tree and extractor.
