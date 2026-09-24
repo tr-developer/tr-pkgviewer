@@ -153,7 +153,7 @@ Decoded info: " + e.DecodedInfo.Length + " bytes" +
                 return Encoding.UTF8.GetString(data, 3, data.Length - 3);
             if (data.Length >= 2 && data[0] == 0xFF && data[1] == 0xFE)
                 return Encoding.Unicode.GetString(data, 2, data.Length - 2);
-            return Encoding.UTF8.GetString(data);
+            try { return new UTF8Encoding(false, true).GetString(data); }\n            catch (DecoderFallbackException) { return Encoding.GetEncoding(949).GetString(data); }
         }
 
         void ExtractSelected()
@@ -179,10 +179,10 @@ Decoded info: " + e.DecodedInfo.Length + " bytes" +
 
         static bool IsEncryptedTextEntry(PkgIndexEntry entry)
         {
-            if (!string.Equals(Path.GetExtension(entry.Name), ".txt", StringComparison.OrdinalIgnoreCase)) return false;
-            // Decoded +0x410 is the entry mode/flag field. Until its individual bits are
-            // fully named, any nonzero TXT mode is conservatively treated as encrypted.
-            return entry.Decoded410 != 0;
+            // +0x410 is not an encrypted-TXT marker: the sample contains ordinary
+            // UTF-16/CP949/ASCII TXT files with many nonzero values here.
+            // Keep TXT crypt detection separate until its actual framing marker is proven.
+            return false;
         }
 
         void ExportHeader()
