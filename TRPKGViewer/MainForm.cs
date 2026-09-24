@@ -4,7 +4,6 @@ using System.IO;
 using System.Text;
 using System.Windows.Forms;
 using TRPKGViewer.Core;
-using TRPKGViewer.Crypto;
 
 namespace TRPKGViewer
 {
@@ -12,8 +11,6 @@ namespace TRPKGViewer
     {
         readonly PkgReader reader = new PkgReader();
         readonly PkgEntryReader entryReader = new PkgEntryReader();
-        readonly TextDecryptorRegistry decryptors = new TextDecryptorRegistry();
-        readonly TextPayloadPipeline textPipeline;
         PkgInfo pkg;
         readonly TreeView tree = new TreeView();
         readonly TextBox view = new TextBox();
@@ -21,10 +18,6 @@ namespace TRPKGViewer
 
         public MainForm()
         {
-            textPipeline = new TextPayloadPipeline(decryptors);
-            // This ASCII value is confirmed as the active package-crypt seed. The user also
-            // identified it as a text AES key; text framing/mode remains independently extensible.
-            decryptors.Register(AesTextDecryptor.FromKeyString("CECA72E7ACDB485C8DF0AC16A2EA6D92"), true);
             Text = "TR PKG Viewer";
             Width = 1200; Height = 760;
 
@@ -44,11 +37,6 @@ namespace TRPKGViewer
             file.DropDownItems.Add(extractAll);
             menu.Items.Add(file);
 
-            var tools = new ToolStripMenuItem("Tools");
-            var aes = new ToolStripMenuItem("Set aeskey...");
-            aes.Click += (s, e) => RegisterAes();
-            tools.DropDownItems.Add(aes);
-            menu.Items.Add(tools);
 
             MainMenuStrip = menu;
             Controls.Add(menu);
@@ -126,7 +114,6 @@ Decoded info: " + e.DecodedInfo.Length + " bytes" +
             try
             {
                 byte[] payload = entryReader.Read(pkg.Path, entry);
-                payload = ProcessEntryPayload(entry.Name, false, payload);
                 string ext = Path.GetExtension(entry.Name);
                 if (string.Equals(ext, ".txt", StringComparison.OrdinalIgnoreCase) ||
                     string.Equals(ext, ".xml", StringComparison.OrdinalIgnoreCase))
@@ -172,8 +159,6 @@ Decoded info: " + e.DecodedInfo.Length + " bytes" +
                     byte[] payload = entryReader.Read(pkg.Path, entry);
                     // Package-level chunk crypt is handled by PkgEntryReader. Encrypted TXT
                     // must additionally pass through the selected text decrypt type.
-                    bool encryptedText = false; // No encrypted-TXT marker is proven for the supplied package.
-                    payload = ProcessEntryPayload(entry.Name, encryptedText, payload);
                     File.WriteAllBytes(d.FileName, payload);
                     status.Text = "Extracted " + entry.Name + " (" + payload.Length.ToString("N0") + " bytes)";
                 }
@@ -194,9 +179,6 @@ Decoded info: " + e.DecodedInfo.Length + " bytes" +
                     foreach (var entry in pkg.Entries)
                     {
                         byte[] payload = entryReader.Read(pkg.Path, entry);
-                        // No encrypted-TXT marker is proven for this package, so do not
-                        // guess. When a marker is recovered this must use the same gate.
-                        payload = ProcessEntryPayload(entry.Name, false, payload);
 
                         string relative = entry.Name.Replace('/', Path.DirectorySeparatorChar)
                                                     .Replace('\\', Path.DirectorySeparatorChar);
@@ -226,36 +208,5 @@ Decoded info: " + e.DecodedInfo.Length + " bytes" +
                 if (d.ShowDialog() == DialogResult.OK) File.WriteAllBytes(d.FileName, pkg.Header);
         }
 
-        // The eventual entry reader/exporter must call this gate for payloads.
-        byte[] ProcessEntryPayload(string entryName, bool encrypted, byte[] payload)
-        {
-            return textPipeline.Process(entryName, encrypted, payload);
-        }
-
-        void RegisterAes()
-        {
-            using (var f = new AesKeyForm())
-                if (f.ShowDialog(this) == DialogResult.OK)
-                    try { decryptors.Register(AesTextDecryptor.FromKeyString(f.KeyText), true); MessageBox.Show("Active text decrypt type: aeskey"); }
-                    catch (Exception ex) { MessageBox.Show(ex.Message, "Invalid key"); }
-        }
-    }
-
-    sealed class AesKeyForm : Form
-    {
-        readonly TextBox key = new TextBox();
-        public string KeyText { get { return key.Text.Trim(); } }
-
-        public AesKeyForm()
-        {
-            Text = "aeskey"; Width = 520; Height = 180;
-            var l1 = new Label { Text = "Decrypt type", Left = 15, Top = 20, Width = 80 };
-            var type = new TextBox { Text = "aeskey", ReadOnly = true }; type.SetBounds(100, 17, 380, 24);
-            var l2 = new Label { Text = "AES key", Left = 15, Top = 55, Width = 80 }; key.SetBounds(100, 52, 380, 24);
-            var ok = new Button { Text = "OK", DialogResult = DialogResult.OK, Left = 320, Top = 90, Width = 75 };
-            var cancel = new Button { Text = "Cancel", DialogResult = DialogResult.Cancel, Left = 405, Top = 90, Width = 75 };
-            Controls.AddRange(new Control[] { l1, type, l2, key, ok, cancel });
-            AcceptButton = ok; CancelButton = cancel;
-        }
     }
 }
