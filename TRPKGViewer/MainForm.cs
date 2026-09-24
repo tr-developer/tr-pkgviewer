@@ -76,7 +76,13 @@ namespace TRPKGViewer
         void ShowNode(TreeNode n)
         {
             if (pkg == null) return;
-            if (n.Tag is PkgIndexEntry)\n            {\n                var e = (PkgIndexEntry)n.Tag;\n                view.Text = "#" + e.Index + "\\r\\n" + e.Name + "\\r\\nEncoded info: " + e.EncodedInfoSize + " bytes\\r\\nDecoded info: " + e.DecodedInfo.Length + " bytes";\n                return;\n            }\n            string t = n.Tag as string;
+            if (n.Tag is PkgIndexEntry)\n            {\n                var e = (PkgIndexEntry)n.Tag;\n                view.Text = "#" + e.Index + "\r\n" + e.Name +
+                    "\r\nEncoded info: " + e.EncodedInfoSize + " bytes\r\nDecoded info: " + e.DecodedInfo.Length + " bytes" +
+                    "\r\n\r\nDecoded +0x404: " + e.Decoded404 +
+                    "\r\nDecoded +0x408: " + e.Decoded408 +
+                    "\r\nDecoded +0x40C: 0x" + e.Decoded40C.ToString("X8") +
+                    "\r\nDecoded +0x410: " + e.Decoded410 +
+                    "\r\nDecoded +0x414: 0x" + e.Decoded414.ToString("X8");\n                return;\n            }\n            string t = n.Tag as string;
             if (t == "header") view.Text = PkgReader.Hex(pkg.Header);
             else if (t == "words")
             {
