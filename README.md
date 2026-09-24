@@ -203,3 +203,18 @@ Post-package TXT payloads in this sample include UTF-16LE BOM text, ASCII, and
 Korean CP949 text. Preview decoding now uses BOM handling, strict UTF-8, then
 CP949 fallback. Text-AES detection/mode/IV/framing remains a separate unresolved
 layer and will only be enabled when its actual client-side marker is recovered.
+
+
+#### TXT population check
+
+All 263 `.txt` entries in the supplied `tr4.pkg` were extracted through the
+validated package pipeline and classified as ordinary text: 217 are UTF-16LE
+with BOM and the remaining 46 decode cleanly as UTF-8/CP949-style text. No TXT
+entry in this sample requires a second text-decrypt pass.
+
+Decoded entry field `+0x410` is therefore **not** an encrypted-TXT marker; it is
+1 across this known plain-text population. The viewer no longer uses that field
+to trigger text decryption. TXT encryption detection now happens only after
+package decompression/decryption, based on whether the resulting payload is
+already valid text. The separate `ITextDecryptor` layer remains in place for
+actual encrypted TXT payloads.
