@@ -8,10 +8,21 @@ namespace TRPKGViewer.Core
         public long Length;
         public byte[] Header;
         public List<PkgWord> Words = new List<PkgWord>();
-        public List<AsciiRun> Strings = new List<AsciiRun>();\n        public PkgHeaderProbe Probe;
+        public List<AsciiRun> Strings = new List<AsciiRun>();
+        public PkgHeaderProbe Probe;
     }
 
-    public sealed class PkgHeaderProbe\n    {\n        public uint Value0C;\n        public uint Value14;\n        public uint Value18;\n        public uint Value1C;\n        public uint Value24;\n        public uint Value28;\n    }\n\n    // Recovered from CUMTPackageReader::open in the supplied dump.
+    public sealed class PkgHeaderProbe
+    {
+        public uint Value0C;
+        public uint Value14;
+        public uint Value18;
+        public uint Value1C;
+        public uint Value24;
+        public uint Value28;
+    }
+
+    // Recovered from CUMTPackageReader::open in the supplied dump.
     // The reader materializes each entry into a packed 0xE5-byte record.
     public sealed class PkgEntryInfo
     {
