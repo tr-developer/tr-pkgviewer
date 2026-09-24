@@ -239,3 +239,16 @@ unverified decryptor. The supplied package currently has no proven encrypted-TXT
 marker/sample. The mandatory text-decrypt gate remains available, but it is
 invoked only when encryption is positively identified by a recovered format
 marker/call path rather than by a readability guess.
+
+
+#### Encryption model correction
+
+There is no second-stage/double encryption for extracted files. Text files are
+not passed through a separate AES layer after package decoding. The supported
+pipeline is now strictly:
+
+`stored chunk -> optional zlib -> optional package crypt -> original file bytes`
+
+The experimental `ITextDecryptor`, `AesTextDecryptor`, registry/pipeline, and
+the UI's `Set aeskey` command have been removed. Text handling after extraction
+is encoding/preview logic only.
