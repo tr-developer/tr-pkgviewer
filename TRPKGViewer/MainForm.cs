@@ -43,11 +43,12 @@ namespace TRPKGViewer
 
             var split = new SplitContainer();
             split.Dock = DockStyle.Fill;
-            split.SplitterDistance = 220;
-            split.Panel1MinSize = 160;
+            split.SplitterDistance = 160;
+            split.Panel1MinSize = 120;
+            split.SplitterWidth = 5;
             split.Panel1.Controls.Add(tree); split.Panel2.Controls.Add(view);
             tree.Dock = DockStyle.Fill; view.Dock = DockStyle.Fill;
-            tree.Font = new Font(FontFamily.GenericSansSerif, 8.5f);
+            tree.Font = new Font(FontFamily.GenericSansSerif, 8.0f);
             view.Multiline = true; view.ScrollBars = ScrollBars.Both;
             view.Font = new Font(FontFamily.GenericMonospace, 9); view.WordWrap = false;
             tree.AfterSelect += (s, e) => ShowNode(e.Node);
