@@ -6,12 +6,13 @@ namespace TRPKGViewer.Core
 {
     public sealed class PkgEntryReader
     {
-        readonly PackageCrypt packageCrypt = new PackageCrypt();
         const int ChunkHeaderSize = 0x14;
         const int MaxChunkSize = 0x19000;
 
-        public byte[] Read(string packagePath, PkgIndexEntry entry)
+        public byte[] Read(string packagePath, PkgIndexEntry entry, string cryptSeed)
         {
+            if (cryptSeed == null) throw new InvalidOperationException("No decryption key is selected.");
+            var packageCrypt = new PackageCrypt(cryptSeed);
             if (entry == null) throw new ArgumentNullException("entry");
             using (var fs = File.OpenRead(packagePath))
             using (var output = new MemoryStream(checked((int)entry.LogicalSize)))
